@@ -284,9 +284,6 @@ function load(k){
 function save(k,v){
   try{ localStorage.setItem('tsnews_'+k,JSON.stringify(v)); }catch(e){}
   DB[k]=v;
-  // Queue a background cloud save
-  clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>pushToSheets(k),2000);
 }
 
 async function pushToSheets(tab){
@@ -347,57 +344,21 @@ function migrateLegacyData(){
     if(old){
       const parsed=JSON.parse(old);
       const keys=['stories','events','ads','sports','reporters'];
-      let migrated=false;
       keys.forEach(k=>{
         if(parsed[k]&&parsed[k].length>0&&!localStorage.getItem('tsnews_'+k)){
           localStorage.setItem('tsnews_'+k,JSON.stringify(parsed[k]));
-          migrated=true;
         }
       });
-      if(migrated) showSyncBar('Previous data restored!','success');
     }
   }catch(e){}
 }
 
-function localIsEmpty(){
-  return LS_KEYS.every(k=>{
-    try{ const v=localStorage.getItem('tsnews_'+k); return !v||JSON.parse(v).length===0; }catch(e){return true;}
-  });
-}
-
-async function initApp(){
+function initApp(){
+  // ONLY load from localStorage. Never touch Google Sheets automatically.
   migrateLegacyData();
   LS_KEYS.forEach(k=>{ DB[k]=load(k); });
   render();
   setSyncStatus('live','Ready');
-
-  if(localIsEmpty()){
-    // New machine — automatically pull from Sheets
-    setSyncStatus('syncing','Loading shared data...');
-    showSyncBar('New device detected — loading data from Google Sheets...');
-    try{
-      let gotData=false;
-      for(const tab of LS_KEYS){
-        const res=await gasRequest({action:'read',tab});
-        if(res.ok&&res.data&&res.data.length>0){
-          localStorage.setItem('tsnews_'+tab,JSON.stringify(res.data));
-          DB[tab]=res.data;
-          gotData=true;
-        }
-      }
-      if(gotData){
-        showSyncBar('Data loaded from Google Sheets!','success');
-        render();
-      } else {
-        showSyncBar('No shared data found yet — start entering data and push to Sheets.','info');
-      }
-      setSyncStatus('live','Ready');
-    }catch(e){
-      setSyncStatus('error','Could not reach Sheets');
-      showSyncBar('Could not reach Google Sheets — you can enter data and push later.','error');
-    }
-  }
-
   setInterval(updateDeadline,60000);
 }
 
