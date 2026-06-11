@@ -482,10 +482,17 @@ function renderWeekGrid(weekOff){
     const isToday=key===today,isDl=dow===1,isPub=dow===3;
     let hdClass='day-hd';if(isToday)hdClass+=' today';else if(isDl)hdClass+=' deadline';else if(isPub)hdClass+=' pubday';
     const daySt=stories.filter(x=>x.due===key).sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status));
-    const dayEv=events.filter(x=>x.date===key);
+    const dayEv=events.filter(x=>{
+      const start=x.date,end=x.dateEnd||x.date;
+      return key>=start&&key<=end;
+    });
     const lbl=isDl?'DEADLINE':isPub?'PUBLISH':'';
     const blocks=[
-      ...dayEv.map(ev=>`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}</div>${ev.note?`<div class="ev-meta" style="color:#7a5020">${esc(ev.note)}</div>`:''}</div>`),
+      ...dayEv.map(ev=>{
+        const timeStr=ev.time?ev.time.replace(/^(\d+):(\d+)$/,(_,h,m)=>{const hh=+h;return`${hh>12?hh-12:hh||12}:${m}${hh>=12?'pm':'am'}`}):'';
+        const multiDay=ev.dateEnd&&ev.dateEnd!==ev.date;
+        return`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}${multiDay&&key===ev.date?' \u25b6':multiDay&&key===ev.dateEnd?' \u25c0':multiDay?' \u25ac':''}</div>${timeStr||ev.note?`<div class="ev-meta" style="color:#7a5020">${timeStr?timeStr+' ':''}${esc(ev.note||'')}</div>`:''}</div>`;
+      }),
       ...daySt.map(s=>{
         const isU=s.urgent===true||s.urgent==='true';
         const bg=isU?URGENTBG:(SBGCOLOR[s.status]||'#222'),bc=isU?URGENT:(SCOLOR[s.status]||'#555');
@@ -568,16 +575,22 @@ function renderEvDrawer(){
   const evs=load('events'),e=evId?evs.find(x=>x.id===evId):null,d=daysList(wkOff),def=dk(d[1]);
   el.innerHTML=`<div class="drawer ev-d" style="margin-bottom:.875rem;border-radius:8px">
     <div class="dhd"><span>&#128205; ${e?'Edit event':'New event'}</span><button class="xbtn" onclick="closeEvDrawer()">&times;</button></div>
-    <div class="r2"><div class="fld"><label>Event name</label><input id="ev-t" value="${esc(e?.title||'')}"></div><div class="fld"><label>Date</label><input type="date" id="ev-d" value="${e?.date||def}"></div></div>
-    <div class="fld"><label>Note (time, location, contact)</label><input id="ev-n" value="${esc(e?.note||'')}"></div>
+    <div class="fld"><label>Event name</label><input id="ev-t" value="${esc(e?.title||'')}"></div>
+    <div class="r3">
+      <div class="fld"><label>Start date</label><input type="date" id="ev-d" value="${e?.date||def}"></div>
+      <div class="fld"><label>End date <span style="color:#555;font-size:10px">(optional)</span></label><input type="date" id="ev-d2" value="${e?.dateEnd||''}"></div>
+      <div class="fld"><label>Time</label><input type="time" id="ev-time" value="${e?.time||''}"></div>
+    </div>
+    <div class="fld"><label>Note (location, contact)</label><input id="ev-n" value="${esc(e?.note||'')}"></div>
     <div class="dfoot"><div>${e?`<button class="del" onclick="delEv('${e.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeEvDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveEv(${e?`'${e.id}'`:'null'})">Save</button></div></div>
   </div>`;
 }
 function saveEv(id){
   const t=document.getElementById('ev-t').value.trim();if(!t)return;
   const evs=load('events');
-  if(id){const e=evs.find(x=>x.id===id);if(e){e.title=t;e.date=document.getElementById('ev-d').value;e.note=document.getElementById('ev-n').value.trim();}}
-  else evs.push({id:uid(),title:t,date:document.getElementById('ev-d').value,note:document.getElementById('ev-n').value.trim()});
+  const obj={title:t,date:document.getElementById('ev-d').value,dateEnd:document.getElementById('ev-d2').value,time:document.getElementById('ev-time').value,note:document.getElementById('ev-n').value.trim()};
+  if(id){const e=evs.find(x=>x.id===id);if(e)Object.assign(e,obj);}
+  else evs.push({id:uid(),...obj});
   save('events',evs);closeEvDrawer();
 }
 function delEv(id){if(!confirm('Delete?'))return;save('events',load('events').filter(x=>x.id!==id));closeEvDrawer()}
