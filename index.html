@@ -342,7 +342,6 @@ async function pullFromSheets(){
 }
 
 function migrateLegacyData(){
-  // Migrate from old key format if present
   try{
     const old=localStorage.getItem('std6')||localStorage.getItem('std5')||localStorage.getItem('std4')||localStorage.getItem('std3')||localStorage.getItem('nst4')||localStorage.getItem('nr1');
     if(old){
@@ -360,11 +359,45 @@ function migrateLegacyData(){
   }catch(e){}
 }
 
-function initApp(){
+function localIsEmpty(){
+  return LS_KEYS.every(k=>{
+    try{ const v=localStorage.getItem('tsnews_'+k); return !v||JSON.parse(v).length===0; }catch(e){return true;}
+  });
+}
+
+async function initApp(){
   migrateLegacyData();
   LS_KEYS.forEach(k=>{ DB[k]=load(k); });
   render();
   setSyncStatus('live','Ready');
+
+  if(localIsEmpty()){
+    // New machine — automatically pull from Sheets
+    setSyncStatus('syncing','Loading shared data...');
+    showSyncBar('New device detected — loading data from Google Sheets...');
+    try{
+      let gotData=false;
+      for(const tab of LS_KEYS){
+        const res=await gasRequest({action:'read',tab});
+        if(res.ok&&res.data&&res.data.length>0){
+          localStorage.setItem('tsnews_'+tab,JSON.stringify(res.data));
+          DB[tab]=res.data;
+          gotData=true;
+        }
+      }
+      if(gotData){
+        showSyncBar('Data loaded from Google Sheets!','success');
+        render();
+      } else {
+        showSyncBar('No shared data found yet — start entering data and push to Sheets.','info');
+      }
+      setSyncStatus('live','Ready');
+    }catch(e){
+      setSyncStatus('error','Could not reach Sheets');
+      showSyncBar('Could not reach Google Sheets — you can enter data and push later.','error');
+    }
+  }
+
   setInterval(updateDeadline,60000);
 }
 
