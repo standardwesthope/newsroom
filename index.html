@@ -6,7 +6,7 @@
 <title>The Standard — Newsroom Planner</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a1a;color:#e8e8e8;font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a1a;color:#e8e8e8;font-size:16px}
 #pw-screen{position:fixed;inset:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:999}
 .pw-box{background:#242424;border:1px solid #444;border-radius:12px;padding:2rem;width:min(360px,90vw);text-align:center}
 .pw-box h2{font-size:20px;font-weight:500;color:#fff;margin-bottom:.5rem}
@@ -14,22 +14,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pw-box input{width:100%;padding:10px 14px;border:1px solid #3a3a3a;border-radius:7px;font-size:14px;background:#1e1e1e;color:#e8e8e8;margin-bottom:1rem;text-align:center;letter-spacing:.1em}
 .pw-box input:focus{outline:none;border-color:#3B82F6}
 .pw-box button{width:100%;padding:10px;border-radius:7px;border:none;background:#185FA5;color:#fff;font-size:14px;font-weight:500;cursor:pointer}
-.pw-box button:hover{background:#0C447C}
 .pw-err{color:#EF4444;font-size:12px;margin-top:.5rem;display:none}
-#sync-bar{position:fixed;top:0;left:0;right:0;background:#185FA5;color:#fff;font-size:12px;padding:6px 16px;display:flex;align-items:center;justify-content:space-between;z-index:100;transform:translateY(-100%);transition:transform .3s}
-#sync-bar.show{transform:translateY(0)}
-#sync-bar.error{background:#7f1d1d}
-#sync-bar.success{background:#14532d}
-.app{padding:.875rem .875rem 2rem;margin-top:0}
+.app{padding:.875rem .875rem 2rem}
 .mast{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:.875rem;border-bottom:1px solid #333;margin-bottom:.875rem}
-.logo{font-size:20px;font-weight:500;color:#fff;display:flex;align-items:center;gap:8px;margin-right:auto}
+.logo{font-size:22px;font-weight:500;color:#fff;display:flex;align-items:center;gap:8px;margin-right:auto}
 .sub{font-size:11px;color:#666;margin-top:2px}
 .deadline-pill{font-size:12px;background:#2a1a0a;border:1px solid #854F0B;border-radius:20px;padding:4px 12px;color:#EF9F27;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;display:inline-block;margin-right:4px;flex-shrink:0}
-.sync-dot.syncing{background:#FBBF24;animation:pulse 1s infinite}
-.sync-dot.error{background:#EF4444}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:7px;border:1px solid #444;background:#2a2a2a;cursor:pointer;font-size:13px;color:#e8e8e8;font-family:inherit;transition:background .12s;line-height:1}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:7px;border:1px solid #444;background:#2a2a2a;cursor:pointer;font-size:14px;color:#e8e8e8;font-family:inherit;transition:background .12s;line-height:1}
 .btn:hover{background:#333}
 .btn-blue{background:#185FA5;color:#fff;border-color:#185FA5}
 .btn-blue:hover{background:#0C447C}
@@ -40,25 +31,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-icon{padding:6px 14px;font-size:18px;font-weight:700;background:#2a2a2a;border:1px solid #444;border-radius:7px;cursor:pointer;color:#e8e8e8;line-height:1;display:inline-flex;align-items:center;justify-content:center;min-width:38px}
 .btn-icon:hover{background:#333}
 .tabs{display:flex;gap:3px;margin-bottom:.875rem;flex-wrap:wrap}
-.tab{padding:6px 14px;border-radius:7px;border:1px solid #333;background:#242424;cursor:pointer;font-size:13px;color:#aaa;transition:all .12s}
+.tab{padding:7px 16px;border-radius:7px;border:1px solid #333;background:#242424;cursor:pointer;font-size:14px;color:#aaa;transition:all .12s}
 .tab:hover{color:#e8e8e8;background:#2e2e2e}
 .tab.on{background:#185FA5;color:#fff;border-color:#185FA5}
 .tc{display:none}.tc.on{display:block}
 .wk-nav{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap}
-.wk-str{font-size:13px;font-weight:500;color:#ccc;text-align:center;min-width:210px}
+.wk-str{font-size:14px;font-weight:500;color:#ccc;text-align:center;min-width:210px}
 .cal-wrap{overflow-x:auto}
 .two-weeks{display:flex;flex-direction:column;gap:8px;min-width:580px}
 .week-block{display:flex;flex-direction:column;gap:3px}
-.wk-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;padding:4px 10px;background:#2a2a2a;border-radius:5px;margin-bottom:3px}
+.wk-label{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;padding:4px 10px;background:#2a2a2a;border-radius:5px;margin-bottom:3px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .day-col{background:#242424;border-radius:10px;overflow:hidden;min-height:140px;display:flex;flex-direction:column}
 .day-hd{padding:8px 4px 6px;text-align:center;border-bottom:1px solid #2e2e2e}
 .day-hd.today{background:#185FA5}
 .day-hd.deadline{background:#3a2200}
 .day-hd.pubday{background:#1a3010}
-.day-name{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666;font-weight:500}
+.day-name{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#666;font-weight:500}
 .day-hd.today .day-name,.day-hd.deadline .day-name,.day-hd.pubday .day-name{color:rgba(255,255,255,.6)}
-.day-num{font-size:20px;font-weight:500;color:#e8e8e8;line-height:1.15}
+.day-num{font-size:22px;font-weight:500;color:#e8e8e8;line-height:1.15}
 .day-hd.today .day-num{color:#fff}
 .day-hd.deadline .day-num{color:#EF9F27}
 .day-hd.pubday .day-num{color:#97C459}
@@ -68,8 +59,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .day-body{padding:5px;flex:1;display:flex;flex-direction:column;gap:3px}
 .ev-block{border-radius:5px;padding:5px 7px;cursor:pointer;border-left:3px solid transparent;position:relative}
 .ev-block:hover{filter:brightness(1.15)}
-.ev-title{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
-.ev-meta{font-size:10px;margin-top:1px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-title{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.ev-meta{font-size:11px;margin-top:1px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .uflag{position:absolute;top:3px;right:5px;font-size:12px;font-weight:900;color:#DC2626;line-height:1}
 .add-btn{margin:2px 3px 4px;background:transparent;border:1px dashed #333;border-radius:5px;padding:5px;text-align:center;cursor:pointer;color:#444;font-size:16px;transition:all .12s;line-height:1}
 .add-btn:hover{border-color:#555;color:#aaa;background:#2a2a2a}
@@ -77,26 +68,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat{background:#242424;border-radius:8px;padding:.625rem 1rem;border:1px solid #2e2e2e}
 .stat.total{border-left:3px solid #3B82F6}.stat.pend{border-left:3px solid #FBBF24}
 .stat.prog{border-left:3px solid #F97316}.stat.done{border-left:3px solid #22C55E}
-.stat-n{font-size:22px;font-weight:500;line-height:1}
+.stat-n{font-size:26px;font-weight:500;line-height:1}
 .stat.total .stat-n{color:#3B82F6}.stat.pend .stat-n{color:#FBBF24}
 .stat.prog .stat-n{color:#F97316}.stat.done .stat-n{color:#22C55E}
-.stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-top:3px}
+.stat-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-top:3px}
 .list-card{background:#242424;border:1px solid #2e2e2e;border-radius:8px;padding:.75rem 1rem;margin-bottom:5px;cursor:pointer;transition:border-color .12s;display:flex;align-items:stretch;gap:9px}
 .list-card:hover{border-color:#555}
 .lbar{width:3px;border-radius:2px;flex-shrink:0}
 .lmain{flex:1;min-width:0}
-.ltitle{font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ltitle{font-size:14px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lmeta{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
-.tag{font-size:11px;padding:2px 7px;border-radius:20px;border:1px solid #333;color:#777;display:inline-flex;align-items:center;gap:2px;white-space:nowrap;background:#2a2a2a}
+.tag{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid #333;color:#777;display:inline-flex;align-items:center;gap:2px;white-space:nowrap;background:#2a2a2a}
 .lacts{display:flex;gap:2px;align-items:center;flex-shrink:0}
 .xbtn{background:none;border:none;cursor:pointer;color:#555;padding:3px;border-radius:4px;font-size:16px;display:flex;align-items:center;line-height:1}
 .xbtn:hover{color:#e8e8e8}
 .drawer{background:#242424;border:1px solid #444;border-top:3px solid #3B82F6;border-radius:0 0 8px 8px;padding:1.1rem;margin-bottom:8px}
 .drawer.ev-d{border-top-color:#F97316}.drawer.ad-d{border-top-color:#FBBF24}.drawer.sp-d{border-top-color:#22C55E}
-.dhd{font-size:14px;font-weight:500;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;color:#f0f0f0}
+.dhd{font-size:15px;font-weight:500;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;color:#f0f0f0}
 .fld{margin-bottom:.7rem}
-.fld label{display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:3px}
-.fld input,.fld select,.fld textarea{width:100%;padding:7px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:13px;background:#1e1e1e;color:#e8e8e8;font-family:inherit}
+.fld label{display:block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:14px;background:#1e1e1e;color:#e8e8e8;font-family:inherit}
 .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:#3B82F6}
 .fld textarea{resize:vertical;min-height:52px}
 .fld select option{background:#1e1e1e}
@@ -110,18 +101,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ci-extra{display:none}.ci-extra.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pay-extra{display:none}.pay-extra.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .empty{text-align:center;padding:1.5rem 0;color:#444;font-size:13px}
-.section-hd{font-size:14px;font-weight:500;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+.section-hd{font-size:16px;font-weight:500;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
 .filters{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:.75rem}
 .flbl{font-size:11px;color:#555;flex-shrink:0}
-.chip{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid #333;cursor:pointer;background:transparent;color:#888;font-family:inherit;transition:all .12s}
+.chip{font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid #333;cursor:pointer;background:transparent;color:#888;font-family:inherit;transition:all .12s}
 .chip.on{background:#3B82F6;color:#fff;border-color:#3B82F6}
 .chip:hover:not(.on){background:#2a2a2a;color:#e8e8e8}
-.print-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:200}
-.print-box{background:#242424;border:1px solid #444;border-radius:12px;padding:1.25rem;width:min(420px,90vw);max-height:80vh;overflow-y:auto}
-.print-box h3{font-size:15px;font-weight:500;margin-bottom:.875rem;color:#fff}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:200}
+.modal-box{background:#242424;border:1px solid #444;border-radius:12px;padding:1.25rem;width:min(480px,90vw);max-height:85vh;overflow-y:auto}
+.modal-box h3{font-size:15px;font-weight:500;margin-bottom:.875rem;color:#fff}
 .pr-opt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;border:1px solid #333;margin-bottom:5px;cursor:pointer}
 .pr-opt:hover{border-color:#555}
-.pr-opt input{accent-color:#3B82F6;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.pr-opt input[type=radio]{accent-color:#3B82F6;width:14px;height:14px;cursor:pointer;flex-shrink:0}
 .pr-opt label{cursor:pointer;font-size:13px;color:#e8e8e8;flex:1}
 .sportcard{background:#242424;border:1px solid #2e2e2e;border-radius:8px;padding:.75rem 1rem;margin-bottom:5px;display:flex;align-items:center;gap:9px}
 .sportcard:hover{border-color:#555}
@@ -134,9 +125,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cl-item:last-child{border-bottom:none}
 .cl-chk{width:18px;height:18px;border-radius:4px;border:1px solid #444;background:#1e1e1e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all .12s}
 .cl-chk.on{background:#22C55E;border-color:#22C55E;color:#1a1a1a}
-.cl-text{font-size:13px;flex:1}
+.cl-text{font-size:15px;flex:1}
 .cl-text.done{text-decoration:line-through;color:#555}
 .cl-section-title{font-size:11px;color:#666;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;margin-top:4px}
+.email-preview{background:#1e1e1e;border:1px solid #333;border-radius:6px;padding:1rem;font-size:12px;font-family:monospace;color:#ccc;white-space:pre-wrap;max-height:300px;overflow-y:auto;margin:.75rem 0}
 </style>
 </head>
 <body>
@@ -149,12 +141,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
   </div>
 </div>
-
-<div id="sync-bar">
-  <span id="sync-msg">Syncing&hellip;</span>
-  <button onclick="document.getElementById('sync-bar').classList.remove('show')" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px">&times;</button>
-</div>
-
 <div class="app" id="main-app" style="display:none">
 <div class="mast">
   <div>
@@ -162,11 +148,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub">Publishes Wednesday &nbsp;&middot;&nbsp; Print deadline Monday 2:00 PM</div>
   </div>
   <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
-  <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666">
-    <span class="sync-dot" id="sync-dot"></span><span id="sync-status">Local</span>
-  </div>
-  <button class="btn btn-sm" onclick="syncAll(true)" title="Push all data to Google Sheets">&#8679; Push to Sheets</button>
-  <button class="btn btn-sm" onclick="pullFromSheets()" title="Pull data from Google Sheets">&#8681; Pull from Sheets</button>
+  <button class="btn btn-blue btn-sm" onclick="openEmailModal()">&#9993; Email reporters</button>
   <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
   <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Reporters</button>
 </div>
@@ -215,152 +197,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="modal-root"></div>
 </div>
 <script>
-const CORRECT_PW = 'coffeeshop';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1Mqr_kIsxlxJh7HEXfsTjnfvF3o7L5Ff2axVBMIDywe-kY3PiVJ7ttN2rJr1Mo287/exec';
-
-// ---- PASSWORD ----
+const CORRECT_PW='coffeeshop';
 function checkPW(){
   const v=document.getElementById('pw-input').value;
-  if(v===CORRECT_PW){
-    sessionStorage.setItem('ts_auth',CORRECT_PW);
-    document.getElementById('pw-screen').style.display='none';
-    document.getElementById('main-app').style.display='block';
-    initApp();
-  } else {
-    document.getElementById('pw-err').style.display='block';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-input').focus();
-  }
+  if(v===CORRECT_PW){sessionStorage.setItem('ts_auth',CORRECT_PW);document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
+  else{document.getElementById('pw-err').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
 window.addEventListener('DOMContentLoaded',()=>{
-  if(sessionStorage.getItem('ts_auth')===CORRECT_PW){
-    document.getElementById('pw-screen').style.display='none';
-    document.getElementById('main-app').style.display='block';
-    initApp();
-  } else {
-    document.getElementById('pw-input').focus();
-  }
+  if(sessionStorage.getItem('ts_auth')===CORRECT_PW){document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
+  else document.getElementById('pw-input').focus();
 });
 
-// ---- SYNC ENGINE ----
-// Local cache — data lives here in memory, synced to/from Sheets
-let DB = {stories:[],events:[],ads:[],sports:[],reporters:[],checklist:[]};
-let syncTimer = null;
-let lastSync = null;
-
-function setSyncStatus(state, msg){
-  const dot=document.getElementById('sync-dot');
-  const txt=document.getElementById('sync-status');
-  if(!dot||!txt)return;
-  dot.className='sync-dot'+(state==='syncing'?' syncing':state==='error'?' error':'');
-  txt.textContent=msg||'Live';
-}
-
-function showSyncBar(msg, type='info'){
-  const bar=document.getElementById('sync-bar');
-  const msgEl=document.getElementById('sync-msg');
-  if(!bar||!msgEl)return;
-  msgEl.textContent=msg;
-  bar.className='show '+(type==='error'?'error':type==='success'?'success':'');
-  setTimeout(()=>bar.classList.remove('show'),3000);
-}
-
-async function gasRequest(params){
-  const url=GAS_URL+'?'+Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
-  const res=await fetch(url);
-  return res.json();
-}
-
-function isFormOpen(){ return !!(openStoryId||evOpen||adOpen||spOpen||repOpen); }
-
-// ---- DATA LAYER ----
-// localStorage is PRIMARY store. Google Sheets is for sharing/backup only.
-// Data is NEVER pulled from Sheets automatically — only on manual request.
-const LS_KEYS=['stories','events','ads','sports','reporters'];
-
-function load(k){
-  try{ const v=localStorage.getItem('tsnews_'+k); return v?JSON.parse(v):[]; }catch(e){return [];}
-}
-function save(k,v){
-  try{ localStorage.setItem('tsnews_'+k,JSON.stringify(v)); }catch(e){}
-  DB[k]=v;
-}
-
-async function pushToSheets(tab){
-  // Push one tab to Google Sheets silently
-  try{
-    setSyncStatus('syncing','Saving to cloud...');
-    const data=load(tab);
-    await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(data))});
-    setSyncStatus('live','Saved \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-  }catch(e){
-    setSyncStatus('error','Cloud save failed \u2014 data safe locally');
-  }
-}
-
-async function syncAll(manual=false){
-  // Manual sync: push ALL local data up to Sheets
-  if(isFormOpen()){showSyncBar('Close the open form first, then sync.','error');return;}
-  setSyncStatus('syncing','Pushing to Google Sheets...');
-  showSyncBar('Uploading all data to Google Sheets...');
-  try{
-    for(const tab of LS_KEYS){
-      const data=load(tab);
-      await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(data))});
-    }
-    setSyncStatus('live','Synced \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-    showSyncBar('All data pushed to Google Sheets!','success');
-  }catch(e){
-    setSyncStatus('error','Sync failed');
-    showSyncBar('Could not reach Google Sheets.','error');
-  }
-}
-
-async function pullFromSheets(){
-  // Pull ALL data FROM Sheets — overwrites local. Only called manually.
-  if(!confirm('This will replace ALL local data with what is in Google Sheets. Continue?'))return;
-  if(isFormOpen()){showSyncBar('Close the open form first.','error');return;}
-  setSyncStatus('syncing','Pulling from Google Sheets...');
-  try{
-    for(const tab of LS_KEYS){
-      const res=await gasRequest({action:'read',tab});
-      if(res.ok&&res.data&&res.data.length>0){
-        localStorage.setItem('tsnews_'+tab,JSON.stringify(res.data));
-        DB[tab]=res.data;
-      }
-    }
-    setSyncStatus('live','Pulled from Sheets');
-    showSyncBar('Data pulled from Google Sheets!','success');
-    render();
-  }catch(e){
-    setSyncStatus('error','Pull failed');
-    showSyncBar('Could not reach Google Sheets.','error');
-  }
-}
-
-function migrateLegacyData(){
-  try{
-    const old=localStorage.getItem('std6')||localStorage.getItem('std5')||localStorage.getItem('std4')||localStorage.getItem('std3')||localStorage.getItem('nst4')||localStorage.getItem('nr1');
-    if(old){
-      const parsed=JSON.parse(old);
-      const keys=['stories','events','ads','sports','reporters'];
-      keys.forEach(k=>{
-        if(parsed[k]&&parsed[k].length>0&&!localStorage.getItem('tsnews_'+k)){
-          localStorage.setItem('tsnews_'+k,JSON.stringify(parsed[k]));
-        }
-      });
-    }
-  }catch(e){}
-}
-
-function initApp(){
-  // ONLY load from localStorage. Never touch Google Sheets automatically.
-  migrateLegacyData();
-  LS_KEYS.forEach(k=>{ DB[k]=load(k); });
-  render();
-  setSyncStatus('live','Ready');
-  setInterval(updateDeadline,60000);
-}
+// ---- DATA — 100% localStorage, nothing auto-syncs ----
+const DBKEY='thestandard_v1';
+function dbget(){try{return JSON.parse(localStorage.getItem(DBKEY)||'{}')}catch(e){return{}}}
+function dbset(d){try{localStorage.setItem(DBKEY,JSON.stringify(d))}catch(e){}}
+function load(k){return dbget()[k]||[]}
+function save(k,v){const d=dbget();d[k]=v;dbset(d)}
 
 // ---- CONSTANTS ----
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -401,19 +254,11 @@ const fmtDk=s=>{if(!s)return'';const d=new Date(s+'T12:00:00');return`${DAYS[d.g
 const daysList=off=>{const s=wkStart(off===undefined?wkOff:off);return Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})};
 const repOpts=sel=>['',  ...load('reporters').map(r=>r.name)].map(n=>`<option value="${esc(n)}"${sel===n?' selected':''}>${n||'\u2014 unassigned \u2014'}</option>`).join('');
 
-// ---- CHECKLIST (local per-browser, resets weekly) ----
 function clKey(){const d=daysList(0)[0];return'cl-'+dk(d)}
 function loadCL(){const raw=localStorage.getItem(clKey());return raw?JSON.parse(raw):DEFAULT_TASKS.map(t=>({...t,done:false}))}
 function saveCL(items){localStorage.setItem(clKey(),JSON.stringify(items))}
 function toggleCL(id){const items=loadCL(),t=items.find(x=>x.id===id);if(t)t.done=!t.done;saveCL(items);renderChecklist()}
-function addCustomTask(){
-  const txt=prompt('Task description:');if(!txt||!txt.trim())return;
-  const day=parseInt(prompt('Day? (0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat)','1'));
-  const section=DAYS[isNaN(day)?1:day]+' \u2014 Custom';
-  const items=loadCL();
-  items.push({id:uid(),day:isNaN(day)?1:day,text:txt.trim(),section,done:false,custom:true});
-  saveCL(items);renderChecklist();
-}
+function addCustomTask(){const txt=prompt('Task description:');if(!txt||!txt.trim())return;const day=parseInt(prompt('Day? (0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat)','1'));const section=DAYS[isNaN(day)?1:day]+' \u2014 Custom';const items=loadCL();items.push({id:uid(),day:isNaN(day)?1:day,text:txt.trim(),section,done:false,custom:true});saveCL(items);renderChecklist()}
 function deleteCLTask(id){saveCL(loadCL().filter(x=>x.id!==id));renderChecklist()}
 function resetCL(){if(!confirm('Reset checklist?'))return;saveCL(DEFAULT_TASKS.map(t=>({...t,done:false})));renderChecklist()}
 
@@ -433,14 +278,7 @@ function renderChecklist(){
   html+='</div>';el.innerHTML=html;
 }
 
-function switchTab(t){
-  activeTab=t;
-  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on'));
-  document.querySelectorAll('.tc').forEach(e=>e.classList.remove('on'));
-  document.getElementById('tab-'+t).classList.add('on');
-  document.getElementById('tc-'+t).classList.add('on');
-  render();
-}
+function switchTab(t){activeTab=t;document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on'));document.querySelectorAll('.tc').forEach(e=>e.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');document.getElementById('tc-'+t).classList.add('on');render()}
 function shiftWeek(n){wkOff=n===0?0:wkOff+n;render()}
 
 function updateDeadline(){
@@ -482,16 +320,14 @@ function renderWeekGrid(weekOff){
     const isToday=key===today,isDl=dow===1,isPub=dow===3;
     let hdClass='day-hd';if(isToday)hdClass+=' today';else if(isDl)hdClass+=' deadline';else if(isPub)hdClass+=' pubday';
     const daySt=stories.filter(x=>x.due===key).sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status));
-    const dayEv=events.filter(x=>{
-      const start=x.date,end=x.dateEnd||x.date;
-      return key>=start&&key<=end;
-    });
+    const dayEv=events.filter(x=>{const s=x.date,e=x.dateEnd||x.date;return key>=s&&key<=e;});
     const lbl=isDl?'DEADLINE':isPub?'PUBLISH':'';
     const blocks=[
       ...dayEv.map(ev=>{
-        const timeStr=ev.time?ev.time.replace(/^(\d+):(\d+)$/,(_,h,m)=>{const hh=+h;return`${hh>12?hh-12:hh||12}:${m}${hh>=12?'pm':'am'}`}):'';
-        const multiDay=ev.dateEnd&&ev.dateEnd!==ev.date;
-        return`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}${multiDay&&key===ev.date?' \u25b6':multiDay&&key===ev.dateEnd?' \u25c0':multiDay?' \u25ac':''}</div>${timeStr||ev.note?`<div class="ev-meta" style="color:#7a5020">${timeStr?timeStr+' ':''}${esc(ev.note||'')}</div>`:''}</div>`;
+        const timeStr=ev.time?ev.time.replace(/^(\d+):(\d+)$/,(_,h,m)=>{const hh=+h;return`${hh>12?hh-12:hh||12}:${m}${hh>=12?'pm':'am'}`;}):'';
+        const multi=ev.dateEnd&&ev.dateEnd!==ev.date;
+        const arrow=multi?(key===ev.date?' \u25b6':key===ev.dateEnd?' \u25c0':' \u25ac'):'';
+        return`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}${arrow}</div>${timeStr||ev.note?`<div class="ev-meta" style="color:#7a5020">${timeStr?timeStr+' ':''}${esc(ev.note||'')}</div>`:''}</div>`;
       }),
       ...daySt.map(s=>{
         const isU=s.urgent===true||s.urgent==='true';
@@ -516,12 +352,7 @@ function renderTwoWeeks(){
   el.innerHTML=`<div class="week-block"><div class="wk-label">${lbl0}</div><div class="cal-grid">${renderWeekGrid(wkOff)}</div></div><div class="week-block" style="margin-top:6px"><div class="wk-label">${lbl1}</div><div class="cal-grid">${renderWeekGrid(wkOff+1)}</div></div>`;
 }
 
-function quickAdd(date){
-  const stories=load('stories'),id=uid();
-  stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,page:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});
-  save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();
-  setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50);
-}
+function quickAdd(date){const stories=load('stories'),id=uid();stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,page:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50)}
 function addNewStory(){const d=daysList(wkOff),defDue=dk(d[3]);quickAdd(defDue)}
 function openStoryInline(id){openStoryId=openStoryId===id?null:id;renderStoryForm()}
 
@@ -530,8 +361,7 @@ function renderStoryForm(){
   if(!openStoryId){el.innerHTML='';return;}
   const stories=load('stories'),s=stories.find(x=>x.id===openStoryId);
   if(!s){el.innerHTML='';return;}
-  const isU=s.urgent===true||s.urgent==='true';
-  const topC=isU?URGENT:(SCOLOR[s.status]||'#3B82F6');
+  const isU=s.urgent===true||s.urgent==='true',topC=isU?URGENT:(SCOLOR[s.status]||'#3B82F6');
   const pgO=PAGES.map(p=>`<option${(s.page||'TBD')===p?' selected':''}>${p}</option>`).join('');
   const stO=STATUSES.map(p=>`<option${(s.status||'Idea')===p?' selected':''}>${p}</option>`).join('');
   const secO=SECTIONS.map(p=>`<option${(s.section||'News')===p?' selected':''}>${p}</option>`).join('');
@@ -545,24 +375,9 @@ function renderStoryForm(){
     <div class="dfoot"><button class="del" onclick="delStory('${s.id}')">&#128465; Delete</button><div class="dbtns"><button class="btn" onclick="openStoryInline(null)">Cancel</button><button class="btn btn-blue" onclick="saveStory('${s.id}')">Save</button></div></div>
   </div>`;
 }
-
 function saveStory(id){
   const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;
-  s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';
-  s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';
-  s.reporter=document.getElementById('sf-rep-'+id)?.value||'';
-  s.section=document.getElementById('sf-sec-'+id)?.value||s.section;
-  s.status=document.getElementById('sf-st-'+id)?.value||s.status;
-  s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';
-  s.due=document.getElementById('sf-due-'+id)?.value||s.due;
-  s.page=document.getElementById('sf-pg-'+id)?.value||s.page;
-  s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';
-  s.layout=document.getElementById('sf-layout-'+id)?.value||'';
-  s.sources=document.getElementById('sf-src-'+id)?.value||'';
-  s.notes=document.getElementById('sf-notes-'+id)?.value||'';
-  s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';
-  s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';
-  s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;
+  s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';s.reporter=document.getElementById('sf-rep-'+id)?.value||'';s.section=document.getElementById('sf-sec-'+id)?.value||s.section;s.status=document.getElementById('sf-st-'+id)?.value||s.status;s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';s.due=document.getElementById('sf-due-'+id)?.value||s.due;s.page=document.getElementById('sf-pg-'+id)?.value||s.page;s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';s.layout=document.getElementById('sf-layout-'+id)?.value||'';s.sources=document.getElementById('sf-src-'+id)?.value||'';s.notes=document.getElementById('sf-notes-'+id)?.value||'';s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;
   save('stories',stories);openStoryId=null;render();
 }
 function delStory(id){if(!confirm('Delete?'))return;save('stories',load('stories').filter(x=>x.id!==id));openStoryId=null;render()}
@@ -576,29 +391,20 @@ function renderEvDrawer(){
   el.innerHTML=`<div class="drawer ev-d" style="margin-bottom:.875rem;border-radius:8px">
     <div class="dhd"><span>&#128205; ${e?'Edit event':'New event'}</span><button class="xbtn" onclick="closeEvDrawer()">&times;</button></div>
     <div class="fld"><label>Event name</label><input id="ev-t" value="${esc(e?.title||'')}"></div>
-    <div class="r3">
-      <div class="fld"><label>Start date</label><input type="date" id="ev-d" value="${e?.date||def}"></div>
-      <div class="fld"><label>End date <span style="color:#555;font-size:10px">(optional)</span></label><input type="date" id="ev-d2" value="${e?.dateEnd||''}"></div>
-      <div class="fld"><label>Time</label><input type="time" id="ev-time" value="${e?.time||''}"></div>
-    </div>
+    <div class="r3"><div class="fld"><label>Start date</label><input type="date" id="ev-d" value="${e?.date||def}"></div><div class="fld"><label>End date <span style="font-size:10px;color:#555">(optional)</span></label><input type="date" id="ev-d2" value="${e?.dateEnd||''}"></div><div class="fld"><label>Time</label><input type="time" id="ev-time" value="${e?.time||''}"></div></div>
     <div class="fld"><label>Note (location, contact)</label><input id="ev-n" value="${esc(e?.note||'')}"></div>
     <div class="dfoot"><div>${e?`<button class="del" onclick="delEv('${e.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeEvDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveEv(${e?`'${e.id}'`:'null'})">Save</button></div></div>
   </div>`;
 }
 function saveEv(id){
   const t=document.getElementById('ev-t').value.trim();if(!t)return;
-  const evs=load('events');
-  const obj={title:t,date:document.getElementById('ev-d').value,dateEnd:document.getElementById('ev-d2').value,time:document.getElementById('ev-time').value,note:document.getElementById('ev-n').value.trim()};
-  if(id){const e=evs.find(x=>x.id===id);if(e)Object.assign(e,obj);}
-  else evs.push({id:uid(),...obj});
+  const evs=load('events'),obj={title:t,date:document.getElementById('ev-d').value,dateEnd:document.getElementById('ev-d2').value,time:document.getElementById('ev-time').value,note:document.getElementById('ev-n').value.trim()};
+  if(id){const e=evs.find(x=>x.id===id);if(e)Object.assign(e,obj);}else evs.push({id:uid(),...obj});
   save('events',evs);closeEvDrawer();
 }
 function delEv(id){if(!confirm('Delete?'))return;save('events',load('events').filter(x=>x.id!==id));closeEvDrawer()}
 
-function renderAdFilters(){
-  const el=document.getElementById('ad-filters');if(!el)return;
-  el.innerHTML=`<span class="flbl">Status:</span>`+['All',...AD_STATUS].map(s=>`<button class="chip${fAdSt===s?' on':''}" onclick="setAdSt('${s}')">${s}</button>`).join('');
-}
+function renderAdFilters(){const el=document.getElementById('ad-filters');if(!el)return;el.innerHTML=`<span class="flbl">Status:</span>`+['All',...AD_STATUS].map(s=>`<button class="chip${fAdSt===s?' on':''}" onclick="setAdSt('${s}')">${s}</button>`).join('')}
 function setAdSt(v){fAdSt=v;renderAdFilters();renderAds()}
 function openAdDrawer(id){adOpen=true;adId=id;renderAdDrawer();renderAds()}
 function closeAdDrawer(){adOpen=false;adId=null;renderAdDrawer();renderAds()}
@@ -626,7 +432,7 @@ function togglePay(){const v=document.getElementById('ad-st')?.value,b=document.
 function saveAd(id){
   const client=document.getElementById('ad-cl').value.trim();if(!client)return;
   const sz=document.getElementById('ad-sz').value,st=document.getElementById('ad-st').value;
-  const ads=load('ads'),obj={client,desc:document.getElementById('ad-desc').value.trim(),size:sz,status:st,page:document.getElementById('ad-pg').value,dateStart:document.getElementById('ad-d1').value,dateEnd:document.getElementById('ad-d2').value,rate:document.getElementById('ad-rate').value.trim(),cols:sz==='Column inch'?document.getElementById('ad-cols').value:'',len:sz==='Column inch'?document.getElementById('ad-len').value:'',payType:st==='Paid'?document.getElementById('ad-paytype').value:'',payRef:st==='Paid'?document.getElementById('ad-payref').value.trim():'',cname:document.getElementById('ad-cname').value.trim(),phone:document.getElementById('ad-phone').value.trim(),email:document.getElementById('ad-email').value.trim(),addr:document.getElementById('ad-addr').value.trim(),notes:document.getElementById('ad-notes').value.trim(),tearsheet:document.getElementById('ad-tear').checked};
+  const ads=load('ads'),obj={client,desc:document.getElementById('ad-desc').value.trim(),size:sz,status:st,page:document.getElementById('ad-pg').value,dateStart:document.getElementById('ad-d1').value,dateEnd:document.getElementById('ad-d2').value,rate:document.getElementById('ad-rate').value.trim(),cols:sz==='Column inch'?document.getElementById('ad-cols').value:'',len:sz==='Column inch'?document.getElementById('ad-len').value:'',payType:st==='Paid'?(document.getElementById('ad-paytype').value||''):'',payRef:st==='Paid'?(document.getElementById('ad-payref').value.trim()||''):'',cname:document.getElementById('ad-cname').value.trim(),phone:document.getElementById('ad-phone').value.trim(),email:document.getElementById('ad-email').value.trim(),addr:document.getElementById('ad-addr').value.trim(),notes:document.getElementById('ad-notes').value.trim(),tearsheet:document.getElementById('ad-tear').checked};
   if(id){const a=ads.find(x=>x.id===id);if(a)Object.assign(a,obj);}else ads.push({id:uid(),...obj});
   save('ads',ads);closeAdDrawer();
 }
@@ -640,10 +446,7 @@ function renderAds(){
   el.innerHTML=ads.map(a=>`<div class="list-card" onclick="openAdDrawer('${a.id}')"><div class="lbar" style="background:${sc[a.status]||'#555'}"></div><div class="lmain"><div class="ltitle">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</div><div class="lmeta"><span class="tag" style="color:${sc[a.status]}">${a.status}</span><span class="tag">${a.size}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</span>${a.page?`<span class="tag">${esc(a.page)}</span>`:''} ${a.dateStart?`<span class="tag">${fmtDk(a.dateStart)}</span>`:''} ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''} ${a.tearsheet===true||a.tearsheet==='true'?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''} ${a.payType?`<span class="tag" style="color:#14B8A6">${esc(a.payType)}${a.payRef?' #'+esc(a.payRef):''}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
 }
 
-function renderSpFilters(){
-  const el=document.getElementById('sp-filters');if(!el)return;
-  el.innerHTML=`<span class="flbl">Sport:</span>`+['All',...SPORT_TYPES].map(s=>`<button class="chip${fSport===s?' on':''}" onclick="setFSp('${s}')">${s}</button>`).join('');
-}
+function renderSpFilters(){const el=document.getElementById('sp-filters');if(!el)return;el.innerHTML=`<span class="flbl">Sport:</span>`+['All',...SPORT_TYPES].map(s=>`<button class="chip${fSport===s?' on':''}" onclick="setFSp('${s}')">${s}</button>`).join('')}
 function setFSp(v){fSport=v;renderSpFilters();renderSports()}
 function openSportDrawer(id){spOpen=true;spId=id;renderSpDrawer();renderSports()}
 function closeSportDrawer(){spOpen=false;spId=null;renderSpDrawer();renderSports()}
@@ -697,13 +500,115 @@ function renderReporters(){
   el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')"><div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#3B82F6;flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><div class="lmain"><div class="ltitle">${esc(r.name)}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
 }
 
+// ---- EMAIL REPORTERS ----
+function openEmailModal(){
+  const reps=load('reporters').filter(r=>r.contact);
+  const allStories=load('stories');
+  const d0=daysList(wkOff),d1=daysList(wkOff+1);
+  const s0=dk(d0[0]),e1=dk(d1[6]);
+  const twoWkStories=allStories.filter(x=>x.due>=s0&&x.due<=e1);
+
+  if(!reps.length){alert('No reporters with email addresses found. Add email addresses in the Reporters tab first.');return;}
+
+  document.getElementById('modal-root').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+      <h3>&#9993; Email assignment to reporter</h3>
+      <div class="fld"><label>Select reporter</label>
+        <select id="email-rep" onchange="previewEmail()" style="width:100%;padding:8px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:13px;background:#1e1e1e;color:#e8e8e8;font-family:inherit">
+          <option value="">— choose reporter —</option>
+          ${reps.map(r=>`<option value="${esc(r.name)}">${esc(r.name)} &lt;${esc(r.contact)}&gt;</option>`).join('')}
+        </select>
+      </div>
+      <div id="email-preview-area"></div>
+      <div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-blue" onclick="sendEmail()">&#9993; Open in email</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function previewEmail(){
+  const repName=document.getElementById('email-rep').value;
+  if(!repName){document.getElementById('email-preview-area').innerHTML='';return;}
+  const reps=load('reporters'),rep=reps.find(r=>r.name===repName);
+  if(!rep)return;
+  const body=buildEmailBody(repName);
+  document.getElementById('email-preview-area').innerHTML=`
+    <div style="margin:.75rem 0 .25rem;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666">Preview</div>
+    <div class="email-preview">${esc(body)}</div>`;
+}
+
+function buildEmailBody(repName){
+  const d0=daysList(wkOff),d1=daysList(wkOff+1);
+  const s0=dk(d0[0]),e0=dk(d0[6]),s1=dk(d1[0]),e1=dk(d1[6]);
+  const allStories=load('stories');
+  const thisWk=allStories.filter(x=>x.reporter===repName&&x.due>=s0&&x.due<=e0).sort((a,b)=>a.due.localeCompare(b.due));
+  const nextWk=allStories.filter(x=>x.reporter===repName&&x.due>=s1&&x.due<=e1).sort((a,b)=>a.due.localeCompare(b.due));
+  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}-${d0[6].getDate()}`;
+  const lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}-${d1[6].getDate()}`;
+
+  let body=`Hi ${repName.split(' ')[0]},\n\nHere are your story assignments from The Standard.\n`;
+  body+=`\n${'='.repeat(50)}\n`;
+  body+=`THIS WEEK (${lbl0}) - publishes Wednesday\n`;
+  body+=`${'='.repeat(50)}\n`;
+  if(thisWk.length){
+    thisWk.forEach((s,i)=>{
+      body+=`\n${i+1}. ${s.headline||'(untitled)'}\n`;
+      body+=`   Status: ${s.status}\n`;
+      body+=`   Section: ${s.section}${s.page?' | Page: '+s.page:''}\n`;
+      body+=`   Due: ${fmtDk(s.due)}${s.wordcount?' | Words: ~'+s.wordcount:''}\n`;
+      if(s.sources) body+=`   Sources/contacts: ${s.sources}\n`;
+      if(s.notes) body+=`   Notes: ${s.notes}\n`;
+      if(s.photoStatus&&s.photoStatus!=='Not needed') body+=`   Photo: ${s.photoStatus}${s.photoAssign?' ('+s.photoAssign+')':''}\n`;
+      if(s.urgent) body+=`   *** URGENT ***\n`;
+    });
+  } else {
+    body+=`\nNo stories assigned this week.\n`;
+  }
+  body+=`\n${'='.repeat(50)}\n`;
+  body+=`NEXT WEEK (${lbl1}) - publishes Wednesday\n`;
+  body+=`${'='.repeat(50)}\n`;
+  if(nextWk.length){
+    nextWk.forEach((s,i)=>{
+      body+=`\n${i+1}. ${s.headline||'(untitled)'}\n`;
+      body+=`   Status: ${s.status}\n`;
+      body+=`   Section: ${s.section}\n`;
+      body+=`   Due: ${fmtDk(s.due)}\n`;
+      if(s.notes) body+=`   Notes: ${s.notes}\n`;
+    });
+  } else {
+    body+=`\nNo stories assigned next week yet.\n`;
+  }
+  body+=`\n${'='.repeat(50)}\n`;
+  body+=`Print deadline: Monday 2:00 PM\n`;
+  body+=`Publishes: Wednesday\n\n`;
+  body+=`-- The Standard Newsroom`;
+  return body;
+}
+
+function sendEmail(){
+  const repName=document.getElementById('email-rep').value;
+  if(!repName){alert('Please select a reporter.');return;}
+  const reps=load('reporters'),rep=reps.find(r=>r.name===repName);
+  if(!rep||!rep.contact){alert('No email address for this reporter.');return;}
+  const subject=`Your story assignments - The Standard`;
+  const body=buildEmailBody(repName);
+  const mailto=`mailto:${encodeURIComponent(rep.contact)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(mailto,'_blank');
+  closeModal();
+}
+
+// ---- PRINT ----
 function openPrintModal(){
   const reps=load('reporters');
-  document.getElementById('modal-root').innerHTML=`<div class="print-bg" onclick="if(event.target===this)closePM()"><div class="print-box"><h3>&#128438; Print assignment sheet</h3><div class="pr-opt"><input type="radio" name="prpt" id="pr-all" value="__all__" checked><label for="pr-all">Full sheet &mdash; all reporters</label></div>${reps.map(r=>`<div class="pr-opt"><input type="radio" name="prpt" id="pr-${r.id}" value="${esc(r.name)}"><label for="pr-${r.id}">&#128101; ${esc(r.name)} <span style="color:#555;font-size:11px">&mdash; ${esc(r.beat||'reporter')}</span></label></div>`).join('')}<div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem"><button class="btn" onclick="closePM()">Cancel</button><button class="btn btn-green" onclick="doPrint()">&#128438; Print</button></div></div></div>`;
+  document.getElementById('modal-root').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal-box"><h3>&#128438; Print assignment sheet</h3><div class="pr-opt"><input type="radio" name="prpt" id="pr-all" value="__all__" checked><label for="pr-all">Full sheet &mdash; all reporters</label></div>${reps.map(r=>`<div class="pr-opt"><input type="radio" name="prpt" id="pr-${r.id}" value="${esc(r.name)}"><label for="pr-${r.id}">&#128101; ${esc(r.name)} <span style="color:#555;font-size:11px">&mdash; ${esc(r.beat||'reporter')}</span></label></div>`).join('')}<div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-green" onclick="doPrint()">&#128438; Print</button></div></div></div>`;
 }
-function closePM(){document.getElementById('modal-root').innerHTML=''}
+
+function closeModal(){document.getElementById('modal-root').innerHTML=''}
+
 function doPrint(){
-  const radio=document.querySelector('input[name=prpt]:checked'),sel=radio?radio.value:'__all__';closePM();
+  const radio=document.querySelector('input[name=prpt]:checked'),sel=radio?radio.value:'__all__';closeModal();
   const allStories=load('stories');
   const d0=daysList(wkOff),d1=daysList(wkOff+1);
   const s0=dk(d0[0]),e0=dk(d0[6]),s1=dk(d1[0]),e1=dk(d1[6]);
@@ -713,8 +618,9 @@ function doPrint(){
   const allSp=load('sports').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const allAds=load('ads').filter(x=>x.dateStart>=s0&&x.dateStart<=e1).sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
   const clItems=loadCL();
-  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()}`,lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`;
-  const pageTitle=sel==='__all__'?'Full Assignment Sheet':`Assignment Sheet \u2014 ${sel}`;
+  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}-${d0[6].getDate()}`;
+  const lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}-${d1[6].getDate()}`;
+  const pageTitle=sel==='__all__'?'Full Assignment Sheet':'Assignment Sheet \u2014 '+sel;
   const isU=s=>s.urgent===true||s.urgent==='true';
   const tr=s=>`<tr${isU(s)?' style="background:#fff0f0"':''}><td>${isU(s)?'\u26a0 ':''}${esc(s.headline||'(untitled)')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
   const pw=window.open('','_blank');
@@ -729,6 +635,8 @@ function doPrint(){
   </body></html>`);
   pw.document.close();setTimeout(()=>pw.print(),350);
 }
+
+function initApp(){render();setInterval(updateDeadline,60000)}
 </script>
 </body>
 </html>
