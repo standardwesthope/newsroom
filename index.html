@@ -163,9 +163,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
   <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666">
-    <span class="sync-dot" id="sync-dot"></span><span id="sync-status">Live</span>
+    <span class="sync-dot" id="sync-dot"></span><span id="sync-status">Local</span>
   </div>
-  <button class="btn btn-sm" onclick="syncAll(true)">&#8635; Sync</button>
+  <button class="btn btn-sm" onclick="syncAll(true)" title="Push all data to Google Sheets">&#8679; Push to Sheets</button>
+  <button class="btn btn-sm" onclick="pullFromSheets()" title="Pull data from Google Sheets">&#8681; Pull from Sheets</button>
   <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
   <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Reporters</button>
 </div>
@@ -270,91 +271,101 @@ async function gasRequest(params){
   return res.json();
 }
 
-function isFormOpen(){ return !!(openStoryId || evOpen || adOpen || spOpen || repOpen); }
+function isFormOpen(){ return !!(openStoryId||evOpen||adOpen||spOpen||repOpen); }
 
-// Local storage keys for offline backup
-const LS_KEYS = ['stories','events','ads','sports','reporters'];
-function backupToLocal(){
-  LS_KEYS.forEach(k=>{ try{ localStorage.setItem('ts_'+k, JSON.stringify(DB[k])); }catch(e){} });
-}
-function restoreFromLocal(){
-  LS_KEYS.forEach(k=>{ try{ const v=localStorage.getItem('ts_'+k); if(v) DB[k]=JSON.parse(v); }catch(e){} });
-}
-function localHasData(){
-  return LS_KEYS.some(k=>{ try{ const v=localStorage.getItem('ts_'+k); return v&&JSON.parse(v).length>0; }catch(e){return false;} });
-}
+// ---- DATA LAYER ----
+// localStorage is PRIMARY store. Google Sheets is for sharing/backup only.
+// Data is NEVER pulled from Sheets automatically — only on manual request.
+const LS_KEYS=['stories','events','ads','sports','reporters'];
 
-async function loadFromSheets(){
-  if(isFormOpen()){ setSyncStatus('live','Paused \u2014 form open'); return; }
-  setSyncStatus('syncing','Syncing...');
-  try {
-    const tabs=['stories','events','ads','sports','reporters'];
-    let sheetHasData=false;
-    const fresh={};
-    for(const tab of tabs){
-      const res=await gasRequest({action:'read',tab});
-      if(res.ok){ fresh[tab]=res.data||[]; if(fresh[tab].length>0) sheetHasData=true; }
-    }
-    if(!sheetHasData && localHasData()){
-      // Sheet is empty but we have local data — push local up to sheet
-      showSyncBar('Uploading your data to Google Sheets...','info');
-      for(const tab of tabs){
-        if(DB[tab]&&DB[tab].length>0){
-          await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(DB[tab]))});
-        }
-      }
-      showSyncBar('Data uploaded to Google Sheets!','success');
-    } else {
-      // Sheet has data — use it
-      tabs.forEach(tab=>{ DB[tab]=fresh[tab]||[]; });
-    }
-    backupToLocal();
-    lastSync=new Date();
-    if(!isFormOpen()) render();
-    setSyncStatus('live','Live \u2014 '+lastSync.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-  } catch(e){
-    setSyncStatus('error','Offline');
-    showSyncBar('Could not reach Google Sheets \u2014 working offline','error');
-  }
+function load(k){
+  try{ const v=localStorage.getItem('tsnews_'+k); return v?JSON.parse(v):[]; }catch(e){return [];}
 }
-
-async function saveTab(tab){
-  setSyncStatus('syncing','Saving...');
-  try {
-    backupToLocal();
-    await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(DB[tab]))});
-    setSyncStatus('live','Saved \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-  } catch(e){
-    setSyncStatus('error','Save error \u2014 data kept locally');
-    showSyncBar('Could not save to Google Sheets \u2014 data saved locally','error');
-  }
-}
-
-function scheduleSave(tab){
+function save(k,v){
+  try{ localStorage.setItem('tsnews_'+k,JSON.stringify(v)); }catch(e){}
+  DB[k]=v;
+  // Queue a background cloud save
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>saveTab(tab),1500);
+  syncTimer=setTimeout(()=>pushToSheets(k),2000);
+}
+
+async function pushToSheets(tab){
+  // Push one tab to Google Sheets silently
+  try{
+    setSyncStatus('syncing','Saving to cloud...');
+    const data=load(tab);
+    await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(data))});
+    setSyncStatus('live','Saved \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){
+    setSyncStatus('error','Cloud save failed \u2014 data safe locally');
+  }
 }
 
 async function syncAll(manual=false){
-  if(manual) showSyncBar('Refreshing from Google Sheets...');
-  await loadFromSheets();
-  if(manual) showSyncBar('All data refreshed!','success');
+  // Manual sync: push ALL local data up to Sheets
+  if(isFormOpen()){showSyncBar('Close the open form first, then sync.','error');return;}
+  setSyncStatus('syncing','Pushing to Google Sheets...');
+  showSyncBar('Uploading all data to Google Sheets...');
+  try{
+    for(const tab of LS_KEYS){
+      const data=load(tab);
+      await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(data))});
+    }
+    setSyncStatus('live','Synced \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+    showSyncBar('All data pushed to Google Sheets!','success');
+  }catch(e){
+    setSyncStatus('error','Sync failed');
+    showSyncBar('Could not reach Google Sheets.','error');
+  }
 }
 
-function load(k){return DB[k]||[]}
-function save(k,v){DB[k]=v;scheduleSave(k)}
+async function pullFromSheets(){
+  // Pull ALL data FROM Sheets — overwrites local. Only called manually.
+  if(!confirm('This will replace ALL local data with what is in Google Sheets. Continue?'))return;
+  if(isFormOpen()){showSyncBar('Close the open form first.','error');return;}
+  setSyncStatus('syncing','Pulling from Google Sheets...');
+  try{
+    for(const tab of LS_KEYS){
+      const res=await gasRequest({action:'read',tab});
+      if(res.ok&&res.data&&res.data.length>0){
+        localStorage.setItem('tsnews_'+tab,JSON.stringify(res.data));
+        DB[tab]=res.data;
+      }
+    }
+    setSyncStatus('live','Pulled from Sheets');
+    showSyncBar('Data pulled from Google Sheets!','success');
+    render();
+  }catch(e){
+    setSyncStatus('error','Pull failed');
+    showSyncBar('Could not reach Google Sheets.','error');
+  }
+}
 
-async function initApp(){
-  // First restore from local backup so screen isn't blank while loading
-  restoreFromLocal();
+function migrateLegacyData(){
+  // Migrate from old key format if present
+  try{
+    const old=localStorage.getItem('std6')||localStorage.getItem('std5')||localStorage.getItem('std4')||localStorage.getItem('std3')||localStorage.getItem('nst4')||localStorage.getItem('nr1');
+    if(old){
+      const parsed=JSON.parse(old);
+      const keys=['stories','events','ads','sports','reporters'];
+      let migrated=false;
+      keys.forEach(k=>{
+        if(parsed[k]&&parsed[k].length>0&&!localStorage.getItem('tsnews_'+k)){
+          localStorage.setItem('tsnews_'+k,JSON.stringify(parsed[k]));
+          migrated=true;
+        }
+      });
+      if(migrated) showSyncBar('Previous data restored!','success');
+    }
+  }catch(e){}
+}
+
+function initApp(){
+  migrateLegacyData();
+  LS_KEYS.forEach(k=>{ DB[k]=load(k); });
   render();
-  // Initialize sheets
-  try { await gasRequest({action:'init'}); } catch(e){}
-  // Then sync with sheets
-  await loadFromSheets();
-  // Auto-refresh every 60 seconds — only when no form is open
-  setInterval(()=>{ if(!isFormOpen()) loadFromSheets(); }, 60000);
-  setInterval(updateDeadline, 60000);
+  setSyncStatus('live','Ready');
+  setInterval(updateDeadline,60000);
 }
 
 // ---- CONSTANTS ----
