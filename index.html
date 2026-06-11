@@ -178,7 +178,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="checklist-area"></div>
 </div>
 <div class="tc" id="tc-ads">
-  <div class="section-hd">Advertising schedule<button class="btn btn-amber btn-sm" onclick="openAdDrawer(null)">+ Add ad</button></div>
+  <div class="section-hd">Advertising schedule<div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="openSalesReport()">&#128200; Sales report</button><button class="btn btn-amber btn-sm" onclick="openAdDrawer(null)">+ Add ad</button></div></div>
   <div id="ad-form-area"></div>
   <div class="filters" id="ad-filters"></div>
   <div id="adlist"></div>
@@ -413,14 +413,16 @@ function renderAdDrawer(){
   if(!adOpen){el.innerHTML='';return;}
   const ads=load('ads'),a=adId?ads.find(x=>x.id===adId):null;
   const isCI=a?.size==='Column inch',isPaid=a?.status==='Paid';
+  const salesOpts=['',  ...load('reporters').map(r=>r.name)].map(n=>`<option value="${esc(n)}"${(a?.salesperson||'')===n?' selected':''}>${n||'— unassigned —'}</option>`).join('');
   el.innerHTML=`<div class="drawer ad-d" style="margin-bottom:.875rem;border-radius:8px">
     <div class="dhd"><span>&#128176; ${a?'Edit ad':'New advertisement'}</span><button class="xbtn" onclick="closeAdDrawer()">&times;</button></div>
     <div class="r2"><div class="fld"><label>Advertiser / client</label><input id="ad-cl" value="${esc(a?.client||'')}"></div><div class="fld"><label>Description</label><input id="ad-desc" value="${esc(a?.desc||'')}"></div></div>
     <div class="r3"><div class="fld"><label>Size</label><select id="ad-sz" onchange="toggleCI()">${AD_SIZES.map(s=>`<option${(a?.size||'Quarter page')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Status</label><select id="ad-st" onchange="togglePay()">${AD_STATUS.map(s=>`<option${(a?.status||'Pending')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Target page</label><select id="ad-pg">${PAGES.map(s=>`<option${(a?.page||'TBD')===s?' selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ci-extra${isCI?' show':''}" id="ci-extra" style="gap:8px;margin-bottom:.7rem"><div class="fld"><label>Columns wide</label><input type="number" id="ad-cols" value="${a?.cols||''}" placeholder="e.g. 2" min="1" max="8"></div><div class="fld"><label>Length (inches)</label><input type="number" id="ad-len" value="${a?.len||''}" placeholder="e.g. 5" step="0.5"></div></div>
     <div class="r3"><div class="fld"><label>Run start</label><input type="date" id="ad-d1" value="${a?.dateStart||''}"></div><div class="fld"><label>Run end</label><input type="date" id="ad-d2" value="${a?.dateEnd||''}"></div><div class="fld"><label>Rate</label><input id="ad-rate" value="${esc(a?.rate||'')}" placeholder="$0.00"></div></div>
+    <div class="r2"><div class="fld"><label>Salesperson</label><select id="ad-sales">${salesOpts}</select></div><div class="fld"><label>Commission / notes</label><input id="ad-commission" value="${esc(a?.commission||'')}" placeholder="e.g. 10%, $25&hellip;"></div></div>
     <div class="pay-extra${isPaid?' show':''}" id="pay-extra" style="gap:8px;margin-bottom:.7rem"><div class="fld"><label>Payment type</label><select id="ad-paytype"><option value="">— select —</option>${['Cash','Check','Credit card','ACH / Transfer','Other'].map(s=>`<option${(a?.payType||'')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Check / ref number</label><input id="ad-payref" value="${esc(a?.payRef||'')}" placeholder="Check #&hellip;"></div></div>
-    <div style="border-top:1px solid #333;padding-top:.875rem;margin-top:.25rem"><div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.5rem">Contact information</div>
+    <div style="border-top:1px solid #333;padding-top:.875rem;margin-top:.25rem"><div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.5rem">Contact information</div>
     <div class="r2"><div class="fld"><label>Contact name</label><input id="ad-cname" value="${esc(a?.cname||'')}"></div><div class="fld"><label>Phone</label><input id="ad-phone" value="${esc(a?.phone||'')}" placeholder="701-555-0000"></div></div>
     <div class="r2"><div class="fld"><label>Email</label><input type="email" id="ad-email" value="${esc(a?.email||'')}"></div><div class="fld"><label>Mailing address</label><input id="ad-addr" value="${esc(a?.addr||'')}"></div></div></div>
     <div class="r2" style="margin-top:.5rem"><div class="fld"><label>Notes</label><input id="ad-notes" value="${esc(a?.notes||'')}"></div><div class="fld"><label style="display:flex;align-items:center;gap:8px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="ad-tear" ${a?.tearsheet===true||a?.tearsheet==='true'?'checked':''} style="width:15px;height:15px;accent-color:#FBBF24;cursor:pointer"> Tear sheet required</label></div></div>
@@ -432,11 +434,106 @@ function togglePay(){const v=document.getElementById('ad-st')?.value,b=document.
 function saveAd(id){
   const client=document.getElementById('ad-cl').value.trim();if(!client)return;
   const sz=document.getElementById('ad-sz').value,st=document.getElementById('ad-st').value;
-  const ads=load('ads'),obj={client,desc:document.getElementById('ad-desc').value.trim(),size:sz,status:st,page:document.getElementById('ad-pg').value,dateStart:document.getElementById('ad-d1').value,dateEnd:document.getElementById('ad-d2').value,rate:document.getElementById('ad-rate').value.trim(),cols:sz==='Column inch'?document.getElementById('ad-cols').value:'',len:sz==='Column inch'?document.getElementById('ad-len').value:'',payType:st==='Paid'?(document.getElementById('ad-paytype').value||''):'',payRef:st==='Paid'?(document.getElementById('ad-payref').value.trim()||''):'',cname:document.getElementById('ad-cname').value.trim(),phone:document.getElementById('ad-phone').value.trim(),email:document.getElementById('ad-email').value.trim(),addr:document.getElementById('ad-addr').value.trim(),notes:document.getElementById('ad-notes').value.trim(),tearsheet:document.getElementById('ad-tear').checked};
+  const ads=load('ads'),obj={client,desc:document.getElementById('ad-desc').value.trim(),size:sz,status:st,page:document.getElementById('ad-pg').value,dateStart:document.getElementById('ad-d1').value,dateEnd:document.getElementById('ad-d2').value,rate:document.getElementById('ad-rate').value.trim(),salesperson:document.getElementById('ad-sales').value,commission:document.getElementById('ad-commission').value.trim(),cols:sz==='Column inch'?document.getElementById('ad-cols').value:'',len:sz==='Column inch'?document.getElementById('ad-len').value:'',payType:st==='Paid'?(document.getElementById('ad-paytype').value||''):'',payRef:st==='Paid'?(document.getElementById('ad-payref').value.trim()||''):'',cname:document.getElementById('ad-cname').value.trim(),phone:document.getElementById('ad-phone').value.trim(),email:document.getElementById('ad-email').value.trim(),addr:document.getElementById('ad-addr').value.trim(),notes:document.getElementById('ad-notes').value.trim(),tearsheet:document.getElementById('ad-tear').checked};
   if(id){const a=ads.find(x=>x.id===id);if(a)Object.assign(a,obj);}else ads.push({id:uid(),...obj});
   save('ads',ads);closeAdDrawer();
 }
 function delAd(id){if(!confirm('Delete?'))return;save('ads',load('ads').filter(x=>x.id!==id));closeAdDrawer()}
+
+function openSalesReport(){
+  const ads=load('ads');
+  const salespeople=[...new Set(ads.map(a=>a.salesperson||'').filter(Boolean))].sort();
+  document.getElementById('modal-root').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+      <h3>&#128200; Sales report</h3>
+      <div class="fld"><label>Salesperson</label>
+        <select id="sr-person" onchange="updateSalesReport()" style="width:100%;padding:8px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:14px;background:#1e1e1e;color:#e8e8e8;font-family:inherit">
+          <option value="__all__">All salspeople</option>
+          ${salespeople.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="r2" style="margin-bottom:.75rem">
+        <div class="fld"><label>Date from</label><input type="date" id="sr-from" onchange="updateSalesReport()"></div>
+        <div class="fld"><label>Date to</label><input type="date" id="sr-to" onchange="updateSalesReport()"></div>
+      </div>
+      <div id="sr-results"></div>
+      <div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem">
+        <button class="btn" onclick="closeModal()">Close</button>
+        <button class="btn btn-green" onclick="printSalesReport()">&#128438; Print report</button>
+      </div>
+    </div>
+  </div>`;
+  updateSalesReport();
+}
+
+function getSalesData(){
+  const sel=document.getElementById('sr-person')?.value||'__all__';
+  const from=document.getElementById('sr-from')?.value||'';
+  const to=document.getElementById('sr-to')?.value||'';
+  let ads=load('ads');
+  if(sel!=='__all__') ads=ads.filter(a=>a.salesperson===sel);
+  if(from) ads=ads.filter(a=>(a.dateStart||'')>=from);
+  if(to) ads=ads.filter(a=>(a.dateStart||'')<=to);
+  return ads.sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
+}
+
+function updateSalesReport(){
+  const el=document.getElementById('sr-results');if(!el)return;
+  const ads=getSalesData();
+  const sc={'Confirmed':'#22C55E','Pending':'#FBBF24','Invoiced':'#3B82F6','Paid':'#14B8A6','Cancelled':'#555'};
+  if(!ads.length){el.innerHTML='<div class="empty">No ads match the selected filters.</div>';return;}
+
+  // Group by salesperson
+  const bySales={};
+  ads.forEach(a=>{
+    const key=a.salesperson||'(unassigned)';
+    if(!bySales[key])bySales[key]=[];
+    bySales[key].push(a);
+  });
+
+  let html='';
+  Object.entries(bySales).forEach(([person,personAds])=>{
+    const total=personAds.length;
+    const paid=personAds.filter(a=>a.status==='Paid').length;
+    const confirmed=personAds.filter(a=>a.status==='Confirmed').length;
+    html+=`<div style="margin-bottom:1rem">
+      <div style="font-size:15px;font-weight:500;color:#fff;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid #333">
+        &#128101; ${esc(person)}
+        <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px">${total} ad${total!==1?'s':''} &nbsp;&middot;&nbsp; ${paid} paid &nbsp;&middot;&nbsp; ${confirmed} confirmed</span>
+      </div>
+      ${personAds.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:13px">
+        <span style="color:${sc[a.status]||'#777'};min-width:80px">${a.status}</span>
+        <span style="flex:1;color:#e8e8e8;font-weight:500">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</span>
+        <span style="color:#888">${a.size}</span>
+        ${a.dateStart?`<span style="color:#888">${fmtDk(a.dateStart)}</span>`:''}
+        ${a.rate?`<span style="color:#22C55E;font-weight:500">${esc(a.rate)}</span>`:''}
+      </div>`).join('')}
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function printSalesReport(){
+  const ads=getSalesData();
+  const sel=document.getElementById('sr-person')?.value||'__all__';
+  const from=document.getElementById('sr-from')?.value||'';
+  const to=document.getElementById('sr-to')?.value||'';
+  const sc={'Confirmed':'Confirmed','Pending':'Pending','Invoiced':'Invoiced','Paid':'PAID','Cancelled':'Cancelled'};
+  const bySales={};
+  ads.forEach(a=>{const key=a.salesperson||'(unassigned)';if(!bySales[key])bySales[key]=[];bySales[key].push(a);});
+  const pw=window.open('','_blank');
+  pw.document.write(`<!DOCTYPE html><html><head><title>Sales Report \u2014 The Standard</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:1.5rem;max-width:900px;margin:0 auto}h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:.4rem;margin-bottom:.2rem}h2{font-size:13px;margin:1.25rem 0 .4rem;border-bottom:1px solid #000;padding-bottom:.25rem;font-weight:700}h3{font-size:11px;margin:.75rem 0 .25rem;text-transform:uppercase;letter-spacing:.05em;color:#555}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:.5rem}th{text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:10px;text-transform:uppercase;background:#f5f5f5}td{padding:4px 6px;border-bottom:1px solid #eee;vertical-align:top}.sub{font-size:11px;color:#555;margin-bottom:.75rem}.summary{background:#f9f9f9;padding:.5rem .75rem;border-radius:4px;margin-bottom:.5rem;font-size:11px}@media print{@page{margin:1cm}body{padding:0}}</style></head><body>
+  <h1>The Standard \u2014 Advertising Sales Report</h1>
+  <div class="sub">${sel==='__all__'?'All salespeople':'Salesperson: '+sel} &nbsp;&middot;&nbsp; ${from?'From: '+fmtDk(from):''} ${to?'To: '+fmtDk(to):''} &nbsp;&middot;&nbsp; Printed ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+  ${Object.entries(bySales).map(([person,pads])=>`
+    <h2>${person}</h2>
+    <div class="summary">Total: ${pads.length} ads &nbsp;&middot;&nbsp; Paid: ${pads.filter(a=>a.status==='Paid').length} &nbsp;&middot;&nbsp; Confirmed: ${pads.filter(a=>a.status==='Confirmed').length} &nbsp;&middot;&nbsp; Pending: ${pads.filter(a=>a.status==='Pending').length}</div>
+    <table><thead><tr><th>Client</th><th>Description</th><th>Size</th><th>Page</th><th>Run date</th><th>Rate</th><th>Status</th><th>Payment</th></tr></thead><tbody>
+    ${pads.map(a=>`<tr><td><strong>${esc(a.client)}</strong></td><td>${esc(a.desc||'')}</td><td>${esc(a.size)}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</td><td>${esc(a.page||'TBD')}</td><td>${fmtDk(a.dateStart)}${a.dateEnd&&a.dateEnd!==a.dateStart?' \u2192 '+fmtDk(a.dateEnd):''}</td><td>${esc(a.rate||'\u2014')}</td><td>${sc[a.status]||a.status}</td><td>${a.payType?esc(a.payType)+(a.payRef?' #'+esc(a.payRef):''):''}</td></tr>`).join('')}
+    </tbody></table>`).join('')}
+  </body></html>`);
+  pw.document.close();setTimeout(()=>pw.print(),350);
+}
 function renderAds(){
   const el=document.getElementById('adlist');if(!el)return;
   let ads=load('ads');if(fAdSt!=='All')ads=ads.filter(x=>x.status===fAdSt);
@@ -463,6 +560,7 @@ function renderAds(){
           ${a.cname?`<div style="font-size:13px;color:#aaa">&#128101; <span style="color:#e8e8e8">${esc(a.cname)}</span></div>`:''}
           ${a.phone?`<div style="font-size:13px;color:#aaa">&#128222; <span style="color:#e8e8e8">${esc(a.phone)}</span></div>`:''}
           ${a.email?`<div style="font-size:13px;color:#aaa">&#9993; <span style="color:#e8e8e8">${esc(a.email)}</span></div>`:''}
+          ${a.salesperson?`<div style="font-size:13px;color:#aaa">&#128100; Sold by: <span style="color:#FBBF24;font-weight:500">${esc(a.salesperson)}</span></div>`:''}
           ${a.tearsheet===true||a.tearsheet==='true'?`<div style="font-size:13px;color:#FBBF24">&#9993; Tear sheet required</div>`:''}
           ${a.payType?`<div style="font-size:13px;color:#14B8A6">&#9989; ${esc(a.payType)}${a.payRef?' \u2014 #'+esc(a.payRef):''}</div>`:''}
         </div>
