@@ -270,6 +270,7 @@ async function gasRequest(params){
   return res.json();
 }
 
+function isFormOpen(){ return !!(openStoryId || evOpen || adOpen || spOpen || repOpen); }
 async function loadFromSheets(){
   setSyncStatus('syncing','Syncing...');
   try {
@@ -279,8 +280,8 @@ async function loadFromSheets(){
       if(res.ok) DB[tab]=res.data||[];
     }
     lastSync=new Date();
+    if(!isFormOpen()) render();
     setSyncStatus('live','Live \u2014 '+lastSync.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-    render();
   } catch(e){
     setSyncStatus('error','Sync error');
     showSyncBar('Could not reach Google Sheets \u2014 working offline','error');
@@ -318,11 +319,7 @@ async function initApp(){
   try { await gasRequest({action:'init'}); } catch(e){}
   await loadFromSheets();
   // Auto-refresh every 60 seconds
-  setInterval(()=>{
-    // Don't sync if a form is open — would wipe unsaved work
-    const anyOpen = openStoryId || evOpen || adOpen || spOpen || repOpen;
-    if(!anyOpen) loadFromSheets();
-  }, 60000);
+  setInterval(()=>{ if(!isFormOpen()) loadFromSheets(); }, 60000);
   setInterval(updateDeadline, 60000);
 }
 
