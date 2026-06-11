@@ -443,7 +443,34 @@ function renderAds(){
   ads.sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
   const sc={'Confirmed':'#22C55E','Pending':'#FBBF24','Invoiced':'#3B82F6','Paid':'#14B8A6','Cancelled':'#555'};
   if(!ads.length){el.innerHTML='<div class="empty">No ads yet.</div>';return;}
-  el.innerHTML=ads.map(a=>`<div class="list-card" onclick="openAdDrawer('${a.id}')"><div class="lbar" style="background:${sc[a.status]||'#555'}"></div><div class="lmain"><div class="ltitle">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</div><div class="lmeta"><span class="tag" style="color:${sc[a.status]}">${a.status}</span><span class="tag">${a.size}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</span>${a.page?`<span class="tag">${esc(a.page)}</span>`:''} ${a.dateStart?`<span class="tag">${fmtDk(a.dateStart)}</span>`:''} ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''} ${a.tearsheet===true||a.tearsheet==='true'?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''} ${a.payType?`<span class="tag" style="color:#14B8A6">${esc(a.payType)}${a.payRef?' #'+esc(a.payRef):''}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
+  el.innerHTML=ads.map(a=>{
+    const statusColor=sc[a.status]||'#777';
+    const sizeStr=a.size+(a.size==='Column inch'&&a.cols?` (${a.cols} col \u00d7 ${a.len||'?'}\u2033)`:'');
+    const dateStr=a.dateStart?fmtDk(a.dateStart)+(a.dateEnd&&a.dateEnd!==a.dateStart?' \u2192 '+fmtDk(a.dateEnd):''):'';
+    return`<div class="list-card" onclick="openAdDrawer('${a.id}')" style="align-items:start;padding:1rem 1.25rem">
+      <div class="lbar" style="background:${statusColor};margin-top:4px"></div>
+      <div class="lmain">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="font-size:16px;font-weight:500;color:#f0f0f0">${esc(a.client)}</span>
+          ${a.desc?`<span style="font-size:14px;color:#888">\u2014 ${esc(a.desc)}</span>`:''}
+          <span class="tag" style="color:${statusColor};border-color:${statusColor}44">${a.status}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-bottom:${a.notes||a.payType?'6px':'0'}">
+          <div style="font-size:13px;color:#aaa">&#128195; <span style="color:#e8e8e8">${esc(sizeStr)}</span></div>
+          ${a.page?`<div style="font-size:13px;color:#aaa">&#128216; <span style="color:#e8e8e8">${esc(a.page)}</span></div>`:''}
+          ${dateStr?`<div style="font-size:13px;color:#aaa">&#128197; <span style="color:#e8e8e8">${dateStr}</span></div>`:''}
+          ${a.rate?`<div style="font-size:13px;color:#aaa">&#128176; <span style="color:#22C55E;font-weight:500">${esc(a.rate)}</span></div>`:''}
+          ${a.cname?`<div style="font-size:13px;color:#aaa">&#128101; <span style="color:#e8e8e8">${esc(a.cname)}</span></div>`:''}
+          ${a.phone?`<div style="font-size:13px;color:#aaa">&#128222; <span style="color:#e8e8e8">${esc(a.phone)}</span></div>`:''}
+          ${a.email?`<div style="font-size:13px;color:#aaa">&#9993; <span style="color:#e8e8e8">${esc(a.email)}</span></div>`:''}
+          ${a.tearsheet===true||a.tearsheet==='true'?`<div style="font-size:13px;color:#FBBF24">&#9993; Tear sheet required</div>`:''}
+          ${a.payType?`<div style="font-size:13px;color:#14B8A6">&#9989; ${esc(a.payType)}${a.payRef?' \u2014 #'+esc(a.payRef):''}</div>`:''}
+        </div>
+        ${a.notes?`<div style="font-size:13px;color:#666;font-style:italic;margin-top:4px">${esc(a.notes)}</div>`:''}
+      </div>
+      <div class="lacts"><button class="xbtn" style="font-size:18px">&#9998;</button></div>
+    </div>`;
+  }).join('');
 }
 
 function renderSpFilters(){const el=document.getElementById('sp-filters');if(!el)return;el.innerHTML=`<span class="flbl">Sport:</span>`+['All',...SPORT_TYPES].map(s=>`<button class="chip${fSport===s?' on':''}" onclick="setFSp('${s}')">${s}</button>`).join('')}
@@ -475,7 +502,27 @@ function renderSports(){
   let sports=load('sports');if(fSport!=='All')sports=sports.filter(x=>x.sport===fSport);
   sports.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if(!sports.length){el.innerHTML='<div class="empty">No events yet.</div>';return;}
-  el.innerHTML=sports.map(s=>`<div class="sportcard ${s.covering===true||s.covering==='true'?'cov':'nocov'}"><div class="chkbox${s.covering===true||s.covering==='true'?' on':''}" onclick="toggleCov('${s.id}')">${s.covering===true||s.covering==='true'?'&#10003;':''}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</div><div class="lmeta" style="margin-top:3px"><span class="tag" style="${s.covering===true||s.covering==='true'?'color:#22C55E;border-color:#22C55E44':'color:#555'}">${s.covering===true||s.covering==='true'?'Covering':'Not covering'}</span><span class="tag">${esc(s.sport)}</span>${s.date?`<span class="tag">${new Date(s.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`:''} ${s.location?`<span class="tag">${esc(s.location)}</span>`:''} ${s.reporter?`<span class="tag">${esc(s.reporter)}</span>`:''}</div></div><button class="xbtn" onclick="openSportDrawer('${s.id}')">&#9998;</button></div>`).join('');
+  el.innerHTML=sports.map(s=>{
+    const isCov=s.covering===true||s.covering==='true';
+    const dateStr=s.date?new Date(s.date).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'';
+    const timeStr=s.date?new Date(s.date).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+    return`<div class="sportcard ${isCov?'cov':'nocov'}" style="align-items:start;padding:1rem 1.25rem">
+      <div class="chkbox${isCov?' on':''}" onclick="toggleCov('${s.id}')" style="margin-top:3px;width:20px;height:20px;font-size:13px">${isCov?'&#10003;':''}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:500;color:#f0f0f0;margin-bottom:6px">${esc(s.title)}${s.opponent?' <span style="color:#888;font-weight:400">vs</span> '+esc(s.opponent):''}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-bottom:${s.notes?'6px':'0'}">
+          <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa">&#127942; <span style="color:#e8e8e8">${esc(s.sport)}</span></div>
+          ${dateStr?`<div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa">&#128197; <span style="color:#e8e8e8">${dateStr}</span></div>`:''}
+          ${timeStr&&s.date?`<div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa">&#9201; <span style="color:#e8e8e8">${timeStr}</span></div>`:''}
+          ${s.location?`<div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa">&#128205; <span style="color:#e8e8e8">${esc(s.location)}</span></div>`:''}
+          ${s.reporter?`<div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa">&#128101; <span style="color:#e8e8e8">${esc(s.reporter)}</span></div>`:''}
+          <div style="display:flex;align-items:center;gap:7px;font-size:13px"><span style="color:${isCov?'#22C55E':'#666'};font-weight:500">${isCov?'&#9989; Covering':'&#9744; Not covering'}</span></div>
+        </div>
+        ${s.notes?`<div style="font-size:13px;color:#666;font-style:italic;margin-top:4px">${esc(s.notes)}</div>`:''}
+      </div>
+      <button class="xbtn" onclick="openSportDrawer('${s.id}')" style="font-size:18px;margin-top:2px">&#9998;</button>
+    </div>`;
+  }).join('');
 }
 
 function openRepDrawer(id){repOpen=true;repId=id;renderRepDrawer()}
