@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Standard — Newsroom Planner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a1a;color:#e8e8e8;font-size:14px}
+#pw-screen{position:fixed;inset:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:999}
+.pw-box{background:#242424;border:1px solid #444;border-radius:12px;padding:2rem;width:min(360px,90vw);text-align:center}
+.pw-box h2{font-size:20px;font-weight:500;color:#fff;margin-bottom:.5rem}
+.pw-box p{font-size:13px;color:#666;margin-bottom:1.5rem}
+.pw-box input{width:100%;padding:10px 14px;border:1px solid #3a3a3a;border-radius:7px;font-size:14px;background:#1e1e1e;color:#e8e8e8;margin-bottom:1rem;text-align:center;letter-spacing:.1em}
+.pw-box input:focus{outline:none;border-color:#3B82F6}
+.pw-box button{width:100%;padding:10px;border-radius:7px;border:none;background:#185FA5;color:#fff;font-size:14px;font-weight:500;cursor:pointer}
+.pw-box button:hover{background:#0C447C}
+.pw-err{color:#EF4444;font-size:12px;margin-top:.5rem;display:none}
+.app{padding:.875rem .875rem 2rem}
+.mast{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:.875rem;border-bottom:1px solid #333;margin-bottom:.875rem}
+.logo{font-size:20px;font-weight:500;color:#fff;display:flex;align-items:center;gap:8px;margin-right:auto}
+.sub{font-size:11px;color:#666;margin-top:2px}
+.deadline-pill{font-size:12px;background:#2a1a0a;border:1px solid #854F0B;border-radius:20px;padding:4px 12px;color:#EF9F27;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:7px;border:1px solid #444;background:#2a2a2a;cursor:pointer;font-size:13px;color:#e8e8e8;font-family:inherit;transition:background .12s;line-height:1}
+.btn:hover{background:#333}
+.btn-blue{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-blue:hover{background:#0C447C}
+.btn-amber{background:#854F0B;color:#FAC775;border-color:#854F0B}
+.btn-green{background:#27500A;color:#C0DD97;border-color:#27500A}
+.btn-green:hover{background:#173404}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-icon{padding:6px 14px;font-size:18px;font-weight:700;background:#2a2a2a;border:1px solid #444;border-radius:7px;cursor:pointer;color:#e8e8e8;line-height:1;display:inline-flex;align-items:center;justify-content:center;min-width:38px}
+.btn-icon:hover{background:#333}
+.tabs{display:flex;gap:3px;margin-bottom:.875rem;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:7px;border:1px solid #333;background:#242424;cursor:pointer;font-size:13px;color:#aaa;transition:all .12s}
+.tab:hover{color:#e8e8e8;background:#2e2e2e}
+.tab.on{background:#185FA5;color:#fff;border-color:#185FA5}
+.tc{display:none}.tc.on{display:block}
+.wk-nav{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap}
+.wk-str{font-size:13px;font-weight:500;color:#ccc;text-align:center;min-width:210px}
+.cal-wrap{overflow-x:auto}
+.two-weeks{display:flex;flex-direction:column;gap:8px;min-width:580px}
+.week-block{display:flex;flex-direction:column;gap:3px}
+.wk-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;padding:4px 10px;background:#2a2a2a;border-radius:5px;margin-bottom:3px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day-col{background:#242424;border-radius:10px;overflow:hidden;min-height:140px;display:flex;flex-direction:column}
+.day-hd{padding:8px 4px 6px;text-align:center;border-bottom:1px solid #2e2e2e}
+.day-hd.today{background:#185FA5}
+.day-hd.deadline{background:#3a2200}
+.day-hd.pubday{background:#1a3010}
+.day-name{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666;font-weight:500}
+.day-hd.today .day-name,.day-hd.deadline .day-name,.day-hd.pubday .day-name{color:rgba(255,255,255,.6)}
+.day-num{font-size:20px;font-weight:500;color:#e8e8e8;line-height:1.15}
+.day-hd.today .day-num{color:#fff}
+.day-hd.deadline .day-num{color:#EF9F27}
+.day-hd.pubday .day-num{color:#97C459}
+.day-lbl{font-size:8px;font-weight:600;letter-spacing:.06em;margin-top:1px;text-transform:uppercase}
+.day-hd.deadline .day-lbl{color:#EF9F27}
+.day-hd.pubday .day-lbl{color:#97C459}
+.day-body{padding:5px;flex:1;display:flex;flex-direction:column;gap:3px}
+.ev-block{border-radius:5px;padding:5px 7px;cursor:pointer;border-left:3px solid transparent;position:relative}
+.ev-block:hover{filter:brightness(1.15)}
+.ev-title{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.ev-meta{font-size:10px;margin-top:1px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uflag{position:absolute;top:3px;right:5px;font-size:12px;font-weight:900;color:#DC2626;line-height:1}
+.add-btn{margin:2px 3px 4px;background:transparent;border:1px dashed #333;border-radius:5px;padding:5px;text-align:center;cursor:pointer;color:#444;font-size:16px;transition:all .12s;line-height:1}
+.add-btn:hover{border-color:#555;color:#aaa;background:#2a2a2a}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:.875rem}
+.stat{background:#242424;border-radius:8px;padding:.625rem 1rem;border:1px solid #2e2e2e}
+.stat.total{border-left:3px solid #3B82F6}.stat.pend{border-left:3px solid #FBBF24}
+.stat.prog{border-left:3px solid #F97316}.stat.done{border-left:3px solid #22C55E}
+.stat-n{font-size:22px;font-weight:500;line-height:1}
+.stat.total .stat-n{color:#3B82F6}.stat.pend .stat-n{color:#FBBF24}
+.stat.prog .stat-n{color:#F97316}.stat.done .stat-n{color:#22C55E}
+.stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-top:3px}
+.list-card{background:#242424;border:1px solid #2e2e2e;border-radius:8px;padding:.75rem 1rem;margin-bottom:5px;cursor:pointer;transition:border-color .12s;display:flex;align-items:stretch;gap:9px}
+.list-card:hover{border-color:#555}
+.lbar{width:3px;border-radius:2px;flex-shrink:0}
+.lmain{flex:1;min-width:0}
+.ltitle{font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lmeta{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.tag{font-size:11px;padding:2px 7px;border-radius:20px;border:1px solid #333;color:#777;display:inline-flex;align-items:center;gap:2px;white-space:nowrap;background:#2a2a2a}
+.lacts{display:flex;gap:2px;align-items:center;flex-shrink:0}
+.xbtn{background:none;border:none;cursor:pointer;color:#555;padding:3px;border-radius:4px;font-size:16px;display:flex;align-items:center;line-height:1}
+.xbtn:hover{color:#e8e8e8}
+.drawer{background:#242424;border:1px solid #444;border-top:3px solid #3B82F6;border-radius:0 0 8px 8px;padding:1.1rem;margin-bottom:8px}
+.drawer.ev-d{border-top-color:#F97316}.drawer.ad-d{border-top-color:#FBBF24}.drawer.sp-d{border-top-color:#22C55E}
+.dhd{font-size:14px;font-weight:500;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;color:#f0f0f0}
+.fld{margin-bottom:.7rem}
+.fld label{display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:13px;background:#1e1e1e;color:#e8e8e8;font-family:inherit}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:#3B82F6}
+.fld textarea{resize:vertical;min-height:52px}
+.fld select option{background:#1e1e1e}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.r4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.dfoot{display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.875rem;border-top:1px solid #333}
+.del{background:none;border:none;cursor:pointer;color:#EF4444;font-size:13px;display:flex;align-items:center;gap:4px;font-family:inherit}
+.del:hover{text-decoration:underline}
+.dbtns{display:flex;gap:5px}
+.ci-extra{display:none}.ci-extra.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay-extra{display:none}.pay-extra.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.empty{text-align:center;padding:1.5rem 0;color:#444;font-size:13px}
+.section-hd{font-size:14px;font-weight:500;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+.filters{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:.75rem}
+.flbl{font-size:11px;color:#555;flex-shrink:0}
+.chip{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid #333;cursor:pointer;background:transparent;color:#888;font-family:inherit;transition:all .12s}
+.chip.on{background:#3B82F6;color:#fff;border-color:#3B82F6}
+.chip:hover:not(.on){background:#2a2a2a;color:#e8e8e8}
+.print-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:200}
+.print-box{background:#242424;border:1px solid #444;border-radius:12px;padding:1.25rem;width:min(420px,90vw);max-height:80vh;overflow-y:auto}
+.print-box h3{font-size:15px;font-weight:500;margin-bottom:.875rem;color:#fff}
+.pr-opt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;border:1px solid #333;margin-bottom:5px;cursor:pointer}
+.pr-opt:hover{border-color:#555}
+.pr-opt input{accent-color:#3B82F6;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.pr-opt label{cursor:pointer;font-size:13px;color:#e8e8e8;flex:1}
+.sportcard{background:#242424;border:1px solid #2e2e2e;border-radius:8px;padding:.75rem 1rem;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+.sportcard:hover{border-color:#555}
+.sportcard.cov{border-left:3px solid #22C55E}.sportcard.nocov{border-left:3px solid #444}
+.chkbox{width:16px;height:16px;border-radius:3px;border:1px solid #555;background:#1e1e1e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;transition:all .12s}
+.chkbox.on{background:#22C55E;border-color:#22C55E;color:#1a1a1a}
+.checklist-panel{background:#242424;border:1px solid #2e2e2e;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem}
+.cl-hd{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+.cl-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #2a2a2a}
+.cl-item:last-child{border-bottom:none}
+.cl-chk{width:18px;height:18px;border-radius:4px;border:1px solid #444;background:#1e1e1e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all .12s}
+.cl-chk.on{background:#22C55E;border-color:#22C55E;color:#1a1a1a}
+.cl-text{font-size:13px;flex:1}
+.cl-text.done{text-decoration:line-through;color:#555}
+.cl-section-title{font-size:11px;color:#666;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="pw-screen">
+  <div class="pw-box">
+    <h2>&#128240; The Standard</h2>
+    <p>Newsroom planner — staff access only</p>
+    <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPW()">
+    <button onclick="checkPW()">Enter</button>
+    <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
+  </div>
+</div>
+<div class="app" id="main-app" style="display:none">
+<div class="mast">
+  <div>
+    <div class="logo">&#128240; The Standard</div>
+    <div class="sub">Publishes Wednesday &nbsp;&middot;&nbsp; Print deadline Monday 2:00 PM</div>
+  </div>
+  <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
+  <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
+  <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Reporters</button>
+</div>
+<div class="tabs">
+  <div class="tab on" id="tab-stories" onclick="switchTab('stories')">&#128197; 2-Week View</div>
+  <div class="tab" id="tab-checklist" onclick="switchTab('checklist')">&#9989; Checklist</div>
+  <div class="tab" id="tab-ads" onclick="switchTab('ads')">&#128176; Advertising</div>
+  <div class="tab" id="tab-sports" onclick="switchTab('sports')">&#127942; School / Sports</div>
+  <div class="tab" id="tab-reporters" onclick="switchTab('reporters')">&#128101; Reporters</div>
+</div>
+<div class="tc on" id="tc-stories">
+  <div class="stats-row" id="stats"></div>
+  <div class="wk-nav">
+    <button class="btn-icon" onclick="shiftWeek(-1)" title="Previous 2 weeks">&#8592;</button>
+    <button class="btn-icon" onclick="shiftWeek(1)" title="Next 2 weeks">&#8594;</button>
+    <span class="wk-str" id="wstr"></span>
+    <button class="btn btn-sm" onclick="shiftWeek(0)">&#128197; Today</button>
+    <button class="btn btn-blue btn-sm" style="margin-left:auto" onclick="addNewStory()">+ Add story</button>
+    <button class="btn btn-sm" onclick="openEvDrawer(null)">&#128205; Add event</button>
+  </div>
+  <div id="story-form-area"></div>
+  <div id="ev-form-area"></div>
+  <div class="cal-wrap"><div class="two-weeks" id="two-weeks"></div></div>
+</div>
+<div class="tc" id="tc-checklist">
+  <div class="section-hd">Weekly production checklist</div>
+  <div id="checklist-area"></div>
+</div>
+<div class="tc" id="tc-ads">
+  <div class="section-hd">Advertising schedule<button class="btn btn-amber btn-sm" onclick="openAdDrawer(null)">+ Add ad</button></div>
+  <div id="ad-form-area"></div>
+  <div class="filters" id="ad-filters"></div>
+  <div id="adlist"></div>
+</div>
+<div class="tc" id="tc-sports">
+  <div class="section-hd">School &amp; sports events<button class="btn btn-green btn-sm" onclick="openSportDrawer(null)">+ Add event</button></div>
+  <div id="sp-form-area"></div>
+  <div class="filters" id="sp-filters"></div>
+  <div id="sportlist"></div>
+</div>
+<div class="tc" id="tc-reporters">
+  <div class="section-hd">Reporter roster<button class="btn btn-sm" onclick="openRepDrawer(null)">+ Add reporter</button></div>
+  <div id="rep-form-area"></div>
+  <div id="replist"></div>
+</div>
+<div id="modal-root"></div>
+</div>
+<script>
+// PASSWORD
+const CORRECT_PW = 'coffeeshop';
+function checkPW(){
+  const v = document.getElementById('pw-input').value;
+  if(v === CORRECT_PW){
+    sessionStorage.setItem('ts_auth', CORRECT_PW);
+    document.getElementById('pw-screen').style.display='none';
+    document.getElementById('main-app').style.display='block';
+    seedData(); render();
+  } else {
+    document.getElementById('pw-err').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  if(sessionStorage.getItem('ts_auth')===CORRECT_PW){
+    document.getElementById('pw-screen').style.display='none';
+    document.getElementById('main-app').style.display='block';
+    seedData(); render();
+  } else {
+    document.getElementById('pw-input').focus();
+  }
+});
+
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SECTIONS=['News','Sports','Opinion','Feature','Business','Arts & Culture','Obituaries','Community','Letters','Other'];
+const STATUSES=['Idea','Assigned','Reporting','Writing','Editing','Photo needed','Ready to layout','Filed','Done'];
+const PAGES=['Front page','Page 2','Page 3','Inside','Sports page','Opinion page','Business page','Back page','TBD'];
+const AD_SIZES=['Full page','Half page','Quarter page','Eighth page','Banner','Column inch','Insert','Classified','Digital'];
+const AD_STATUS=['Confirmed','Pending','Invoiced','Paid','Cancelled'];
+const SPORT_TYPES=['Football','Basketball','Volleyball','Baseball','Softball','Track','Cross Country','Wrestling','Swimming','Golf','Tennis','Soccer','Hockey','Other'];
+const SCOLOR={'Idea':'#D1D5DB','Assigned':'#3B82F6','Reporting':'#FBBF24','Writing':'#F97316','Editing':'#8B5CF6','Photo needed':'#EF4444','Ready to layout':'#14B8A6','Filed':'#92400E','Done':'#22C55E'};
+const SBGCOLOR={'Idea':'#202224','Assigned':'#1a2540','Reporting':'#2a2000','Writing':'#271500','Editing':'#1e1628','Photo needed':'#2a1010','Ready to layout':'#0d2020','Filed':'#1e1208','Done':'#0e2018'};
+const URGENT='#DC2626',URGENTBG='#2a0a0a';
+
+const DEFAULT_TASKS=[
+  {id:'t1',day:1,text:'Upload pages to printer',section:'Monday \u2014 Deadline Day'},
+  {id:'t2',day:1,text:'Confirm final ad placements',section:'Monday \u2014 Deadline Day'},
+  {id:'t3',day:1,text:'Send PDF proof to editor',section:'Monday \u2014 Deadline Day'},
+  {id:'t4',day:1,text:'Submit by 2:00 PM deadline',section:'Monday \u2014 Deadline Day'},
+  {id:'t5',day:3,text:'Upload to website',section:'Wednesday \u2014 Publish Day'},
+  {id:'t6',day:3,text:'Post to social media',section:'Wednesday \u2014 Publish Day'},
+  {id:'t7',day:3,text:'Email digital edition to subscribers',section:'Wednesday \u2014 Publish Day'},
+  {id:'t8',day:3,text:'Email tear sheets to advertisers',section:'Wednesday \u2014 Publish Day'},
+  {id:'t9',day:3,text:'File print copies for archive',section:'Wednesday \u2014 Publish Day'},
+  {id:'t10',day:4,text:'Review next week story list',section:'Thursday \u2014 Planning'},
+  {id:'t11',day:4,text:'Contact advertisers for upcoming issue',section:'Thursday \u2014 Planning'},
+  {id:'t12',day:4,text:'Assign reporters for next week',section:'Thursday \u2014 Planning'},
+];
+
+let wkOff=0,activeTab='stories',openStoryId=null,fAdSt='All',fSport='All';
+let evOpen=false,evId=null,adOpen=false,adId=null,spOpen=false,spId=null,repOpen=false,repId=null;
+
+const uid=()=>Math.random().toString(36).slice(2,9);
+const dbget=()=>{try{return JSON.parse(localStorage.getItem('std6')||'{}')}catch(e){return{}}};
+const dbset=d=>{try{localStorage.setItem('std6',JSON.stringify(d))}catch(e){}};
+const load=k=>dbget()[k]||[];
+const save=(k,v)=>{const d=dbget();d[k]=v;dbset(d)};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const wkStart=off=>{const n=new Date(),d=new Date(n);d.setDate(n.getDate()-n.getDay()+(off*7));d.setHours(0,0,0,0);return d};
+const dk=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDk=s=>{if(!s)return'';const d=new Date(s+'T12:00:00');return`${DAYS[d.getDay()].slice(0,3)} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`};
+const daysList=off=>{const s=wkStart(off===undefined?wkOff:off);return Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})};
+const repOpts=sel=>['',  ...load('reporters').map(r=>r.name)].map(n=>`<option value="${esc(n)}"${sel===n?' selected':''}>${n||'\u2014 unassigned \u2014'}</option>`).join('');
+
+function clKey(){const d=daysList(0)[0];return'cl-'+dk(d)}
+function loadCL(){const raw=dbget()[clKey()];return raw||DEFAULT_TASKS.map(t=>({...t,done:false}))}
+function saveCL(items){const d=dbget();d[clKey()]=items;dbset(d)}
+function toggleCL(id){const items=loadCL(),t=items.find(x=>x.id===id);if(t)t.done=!t.done;saveCL(items);renderChecklist()}
+function addCustomTask(){
+  const txt=prompt('Task description:');if(!txt||!txt.trim())return;
+  const day=parseInt(prompt('Day? (0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat)','1'));
+  const section=DAYS[isNaN(day)?1:day]+' \u2014 Custom';
+  const items=loadCL();
+  items.push({id:uid(),day:isNaN(day)?1:day,text:txt.trim(),section,done:false,custom:true});
+  saveCL(items);renderChecklist();
+}
+function deleteCLTask(id){const items=loadCL().filter(x=>x.id!==id);saveCL(items);renderChecklist()}
+function resetCL(){if(!confirm('Reset checklist?'))return;saveCL(DEFAULT_TASKS.map(t=>({...t,done:false})));renderChecklist()}
+
+function renderChecklist(){
+  const el=document.getElementById('checklist-area');if(!el)return;
+  const items=loadCL(),now=new Date(),todayDow=now.getDay();
+  const sections={};
+  items.forEach(t=>{if(!sections[t.section])sections[t.section]={dow:t.day,items:[]};sections[t.section].items.push(t);});
+  const wkDays=daysList(0);
+  const done=items.filter(x=>x.done).length,total=items.length,pct=total?Math.round(done/total*100):0;
+  let html=`<div class="checklist-panel"><div class="cl-hd"><span>Week of ${MONTHS[wkDays[0].getMonth()].slice(0,3)} ${wkDays[0].getDate()} \u2014 ${done}/${total} complete</span><div style="display:flex;gap:6px;align-items:center"><div style="width:80px;height:6px;background:#333;border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#22C55E;border-radius:3px"></div></div><span style="font-size:11px;color:#888">${pct}%</span><button class="btn btn-sm" onclick="addCustomTask()" style="font-size:11px;padding:2px 7px">+ Task</button><button class="btn btn-sm" onclick="resetCL()" style="font-size:11px;padding:2px 7px;color:#888">&#8635; Reset</button></div></div>`;
+  Object.entries(sections).forEach(([sec,grp])=>{
+    const dayDate=wkDays[grp.dow],isToday=grp.dow===todayDow,isPast=grp.dow<todayDow;
+    html+=`<div class="cl-section-title" style="color:${isToday?'#FBBF24':isPast?'#555':'#888'}">${sec} ${dayDate?'('+MONTHS[dayDate.getMonth()].slice(0,3)+' '+dayDate.getDate()+')':''}${isToday?' \u2014 TODAY':''}</div>`;
+    grp.items.forEach(t=>{html+=`<div class="cl-item"><div class="cl-chk${t.done?' on':''}" onclick="toggleCL('${t.id}')">${t.done?'&#10003;':''}</div><span class="cl-text${t.done?' done':''}">${esc(t.text)}</span>${t.custom?`<button class="xbtn" onclick="deleteCLTask('${t.id}')" style="font-size:13px">&times;</button>`:''}</div>`;});
+  });
+  html+='</div>';el.innerHTML=html;
+}
+
+function switchTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.tc').forEach(e=>e.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  document.getElementById('tc-'+t).classList.add('on');
+  render();
+}
+function shiftWeek(n){wkOff=n===0?0:wkOff+n;render()}
+
+function updateDeadline(){
+  const now=new Date(),day=now.getDay();
+  let diff=(1-day+7)%7;if(diff===0&&now.getHours()>=14)diff=7;
+  const dl=new Date(now);dl.setDate(now.getDate()+diff);dl.setHours(14,0,0,0);
+  const ms=dl-now,hrs=Math.floor(ms/3600000),mins=Math.floor((ms%3600000)/60000);
+  const el=document.getElementById('dl-txt'),bar=el?.parentElement;if(!el)return;
+  if(hrs<4){if(bar){bar.style.borderColor=URGENT;bar.style.color=URGENT;bar.style.background='#280a0a';}el.textContent=`DEADLINE ${hrs}h ${mins}m`;}
+  else if(hrs<24){el.textContent=`Deadline today at 2 PM (${hrs}h away)`;}
+  else{el.textContent=`Deadline in ${Math.floor(hrs/24)}d ${hrs%24}h \u2014 Mon 2 PM`;}
+}
+
+function render(){
+  updateDeadline();
+  if(activeTab==='stories'){renderStats();renderTwoWeeks();}
+  if(activeTab==='checklist'){renderChecklist();}
+  if(activeTab==='ads'){renderAdFilters();renderAds();renderAdDrawer();}
+  if(activeTab==='sports'){renderSpFilters();renderSports();renderSpDrawer();}
+  if(activeTab==='reporters'){renderReporters();renderRepDrawer();}
+  renderEvDrawer();renderStoryForm();
+  const d0=daysList(wkOff),d1=daysList(wkOff+1),s0=d0[0],e1=d1[6];
+  const el=document.getElementById('wstr');
+  if(el)el.textContent=`${MONTHS[s0.getMonth()].slice(0,3)} ${s0.getDate()} \u2013 ${MONTHS[e1.getMonth()].slice(0,3)} ${e1.getDate()}, ${e1.getFullYear()}`;
+}
+
+function renderStats(){
+  const el=document.getElementById('stats');if(!el)return;
+  const d0=daysList(wkOff),d1=daysList(wkOff+1),s=dk(d0[0]),e=dk(d1[6]);
+  const st=load('stories').filter(x=>x.due>=s&&x.due<=e);
+  const tot=st.length,pend=st.filter(x=>['Idea','Assigned'].includes(x.status)).length,prog=st.filter(x=>['Reporting','Writing','Editing','Photo needed','Ready to layout'].includes(x.status)).length,done=st.filter(x=>['Filed','Done'].includes(x.status)).length;
+  el.innerHTML=`<div class="stat total"><div class="stat-n">${tot}</div><div class="stat-l">Total (2 wks)</div></div><div class="stat pend"><div class="stat-n">${pend}</div><div class="stat-l">Pending</div></div><div class="stat prog"><div class="stat-n">${prog}</div><div class="stat-l">In progress</div></div><div class="stat done"><div class="stat-n">${done}</div><div class="stat-l">Filed/done</div></div>`;
+}
+function renderWeekGrid(weekOff){
+  const d=daysList(weekOff),today=dk(new Date()),stories=load('stories'),events=load('events');
+  return d.map(day=>{
+    const key=dk(day),dow=day.getDay();
+    const isToday=key===today,isDl=dow===1,isPub=dow===3;
+    let hdClass='day-hd';if(isToday)hdClass+=' today';else if(isDl)hdClass+=' deadline';else if(isPub)hdClass+=' pubday';
+    const daySt=stories.filter(x=>x.due===key).sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status));
+    const dayEv=events.filter(x=>x.date===key);
+    const lbl=isDl?'DEADLINE':isPub?'PUBLISH':'';
+    const blocks=[
+      ...dayEv.map(ev=>`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}</div>${ev.note?`<div class="ev-meta" style="color:#7a5020">${esc(ev.note)}</div>`:''}</div>`),
+      ...daySt.map(s=>{
+        const isU=!!s.urgent,bg=isU?URGENTBG:(SBGCOLOR[s.status]||'#222'),bc=isU?URGENT:(SCOLOR[s.status]||'#555'),ol=isU?`outline:1.5px solid ${URGENT};outline-offset:-1px;`:'';
+        return`<div class="ev-block" style="background:${bg};border-left-color:${bc};${ol}" onclick="openStoryInline('${s.id}')">
+          ${isU?`<span class="uflag">!</span>`:''}
+          <div class="ev-title" style="color:#f0f0f0;padding-right:${isU?'14px':'0'}">${esc(s.headline||'(untitled)')}</div>
+          <div class="ev-meta" style="color:${SCOLOR[s.status]||'#888'}">${s.reporter?esc(s.reporter)+' \u00b7 ':''}${s.status}</div>
+        </div>`;
+      })
+    ];
+    return`<div class="day-col"><div class="${hdClass}"><div class="day-name">${DAYS[day.getDay()]}</div><div class="day-num">${day.getDate()}</div>${lbl?`<div class="day-lbl">${lbl}</div>`:''}</div><div class="day-body">${blocks.join('')}<div class="add-btn" onclick="quickAdd('${key}')">+</div></div></div>`;
+  }).join('');
+}
+
+function renderTwoWeeks(){
+  const el=document.getElementById('two-weeks');if(!el)return;
+  const d0=daysList(wkOff),d1=daysList(wkOff+1);
+  const lbl0=`This week \u2014 ${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()} \u00b7 publishes Wed ${d0[3].getDate()}`;
+  const lbl1=`Next week \u2014 ${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()} \u00b7 publishes Wed ${d1[3].getDate()}`;
+  el.innerHTML=`<div class="week-block"><div class="wk-label">${lbl0}</div><div class="cal-grid">${renderWeekGrid(wkOff)}</div></div><div class="week-block" style="margin-top:6px"><div class="wk-label">${lbl1}</div><div class="cal-grid">${renderWeekGrid(wkOff+1)}</div></div>`;
+}
+
+function quickAdd(date){
+  const stories=load('stories'),id=uid();
+  stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,page:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});
+  save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();
+  setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50);
+}
+function addNewStory(){const d=daysList(wkOff),defDue=dk(d[3]);quickAdd(defDue)}
+function openStoryInline(id){openStoryId=openStoryId===id?null:id;renderStoryForm()}
+
+function renderStoryForm(){
+  const el=document.getElementById('story-form-area');if(!el)return;
+  if(!openStoryId){el.innerHTML='';return;}
+  const stories=load('stories'),s=stories.find(x=>x.id===openStoryId);
+  if(!s){el.innerHTML='';return;}
+  const isU=!!s.urgent,topC=isU?URGENT:(SCOLOR[s.status]||'#3B82F6');
+  const pgO=PAGES.map(p=>`<option${(s.page||'TBD')===p?' selected':''}>${p}</option>`).join('');
+  const stO=STATUSES.map(p=>`<option${(s.status||'Idea')===p?' selected':''}>${p}</option>`).join('');
+  const secO=SECTIONS.map(p=>`<option${(s.section||'News')===p?' selected':''}>${p}</option>`).join('');
+  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px;border-top-color:${topC}">
+    <div class="dhd"><span style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${topC};flex-shrink:0"></span>${s.headline?esc(s.headline):'New story'}${isU?`<span style="font-size:11px;background:${URGENTBG};color:${URGENT};border:1px solid ${URGENT}44;border-radius:20px;padding:1px 8px;font-weight:600">URGENT</span>`:''}</span><button class="xbtn" onclick="openStoryInline(null)">&times;</button></div>
+    <div class="r2"><div class="fld"><label>Headline</label><input id="sf-hl-${s.id}" value="${esc(s.headline||'')}"></div><div class="fld"><label>Subheadline / deck</label><input id="sf-sub-${s.id}" value="${esc(s.subhead||'')}"></div></div>
+    <div class="r4"><div class="fld"><label>Reporter</label><select id="sf-rep-${s.id}">${repOpts(s.reporter||'')}</select></div><div class="fld"><label>Section</label><select id="sf-sec-${s.id}">${secO}</select></div><div class="fld"><label>Status</label><select id="sf-st-${s.id}">${stO}</select></div><div class="fld"><label>Priority</label><select id="sf-pri-${s.id}">${['Normal','High','Breaking','Hold'].map(p=>`<option${(s.priority||'Normal')===p?' selected':''}>${p}</option>`).join('')}</select></div></div>
+    <div class="r4"><div class="fld"><label>Publish date</label><input type="date" id="sf-due-${s.id}" value="${s.due||''}"></div><div class="fld"><label>Target page</label><select id="sf-pg-${s.id}">${pgO}</select></div><div class="fld"><label>Word count</label><input type="number" id="sf-wc-${s.id}" value="${s.wordcount||''}" placeholder="500"></div><div class="fld"><label>Layout notes</label><input id="sf-layout-${s.id}" value="${esc(s.layout||'')}" placeholder="Above fold&hellip;"></div></div>
+    <div class="r2"><div class="fld"><label>Sources / contacts</label><textarea id="sf-src-${s.id}" style="min-height:44px">${esc(s.sources||'')}</textarea></div><div class="fld"><label>Notes / angle</label><textarea id="sf-notes-${s.id}" style="min-height:44px">${esc(s.notes||'')}</textarea></div></div>
+    <div class="r3"><div class="fld"><label>Photo assigned to</label><input id="sf-photo-${s.id}" value="${esc(s.photoAssign||'')}" placeholder="Photographer&hellip;"></div><div class="fld"><label>Photo status</label><select id="sf-photost-${s.id}">${['Not needed','Needed','Assigned','Received','Done'].map(p=>`<option${(s.photoStatus||'Not needed')===p?' selected':''}>${p}</option>`).join('')}</select></div><div class="fld"><label style="display:flex;align-items:center;gap:7px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer;padding-top:18px"><input type="checkbox" ${isU?'checked':''} id="sf-urg-${s.id}" style="width:15px;height:15px;cursor:pointer;accent-color:${URGENT}"> <span style="color:${URGENT};font-weight:500">&#9888; Mark as urgent</span></label></div></div>
+    <div class="dfoot"><button class="del" onclick="delStory('${s.id}')">&#128465; Delete</button><div class="dbtns"><button class="btn" onclick="openStoryInline(null)">Cancel</button><button class="btn btn-blue" onclick="saveStory('${s.id}')">Save</button></div></div>
+  </div>`;
+}
+
+function saveStory(id){
+  const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;
+  s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';
+  s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';
+  s.reporter=document.getElementById('sf-rep-'+id)?.value||'';
+  s.section=document.getElementById('sf-sec-'+id)?.value||s.section;
+  s.status=document.getElementById('sf-st-'+id)?.value||s.status;
+  s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';
+  s.due=document.getElementById('sf-due-'+id)?.value||s.due;
+  s.page=document.getElementById('sf-pg-'+id)?.value||s.page;
+  s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';
+  s.layout=document.getElementById('sf-layout-'+id)?.value||'';
+  s.sources=document.getElementById('sf-src-'+id)?.value||'';
+  s.notes=document.getElementById('sf-notes-'+id)?.value||'';
+  s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';
+  s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';
+  s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;
+  save('stories',stories);openStoryId=null;render();
+}
+function delStory(id){if(!confirm('Delete?'))return;save('stories',load('stories').filter(x=>x.id!==id));openStoryId=null;render()}
+
+function openEvDrawer(id){evOpen=true;evId=id;renderEvDrawer()}
+function closeEvDrawer(){evOpen=false;evId=null;renderEvDrawer();renderTwoWeeks()}
+function renderEvDrawer(){
+  const el=document.getElementById('ev-form-area');if(!el)return;
+  if(!evOpen){el.innerHTML='';return;}
+  const evs=load('events'),e=evId?evs.find(x=>x.id===evId):null,d=daysList(wkOff),def=dk(d[1]);
+  el.innerHTML=`<div class="drawer ev-d" style="margin-bottom:.875rem;border-radius:8px">
+    <div class="dhd"><span>&#128205; ${e?'Edit event':'New event'}</span><button class="xbtn" onclick="closeEvDrawer()">&times;</button></div>
+    <div class="r2"><div class="fld"><label>Event name</label><input id="ev-t" value="${esc(e?.title||'')}"></div><div class="fld"><label>Date</label><input type="date" id="ev-d" value="${e?.date||def}"></div></div>
+    <div class="fld"><label>Note (time, location, contact)</label><input id="ev-n" value="${esc(e?.note||'')}"></div>
+    <div class="dfoot"><div>${e?`<button class="del" onclick="delEv('${e.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeEvDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveEv(${e?`'${e.id}'`:'null'})">Save</button></div></div>
+  </div>`;
+}
+function saveEv(id){
+  const t=document.getElementById('ev-t').value.trim();if(!t)return;
+  const evs=load('events');
+  if(id){const e=evs.find(x=>x.id===id);if(e){e.title=t;e.date=document.getElementById('ev-d').value;e.note=document.getElementById('ev-n').value.trim();}}
+  else evs.push({id:uid(),title:t,date:document.getElementById('ev-d').value,note:document.getElementById('ev-n').value.trim()});
+  save('events',evs);closeEvDrawer();
+}
+function delEv(id){if(!confirm('Delete?'))return;save('events',load('events').filter(x=>x.id!==id));closeEvDrawer()}
+function renderAdFilters(){
+  const el=document.getElementById('ad-filters');if(!el)return;
+  el.innerHTML=`<span class="flbl">Status:</span>`+['All',...AD_STATUS].map(s=>`<button class="chip${fAdSt===s?' on':''}" onclick="setAdSt('${s}')">${s}</button>`).join('');
+}
+function setAdSt(v){fAdSt=v;renderAdFilters();renderAds()}
+function openAdDrawer(id){adOpen=true;adId=id;renderAdDrawer();renderAds()}
+function closeAdDrawer(){adOpen=false;adId=null;renderAdDrawer();renderAds()}
+function renderAdDrawer(){
+  const el=document.getElementById('ad-form-area');if(!el)return;
+  if(!adOpen){el.innerHTML='';return;}
+  const ads=load('ads'),a=adId?ads.find(x=>x.id===adId):null;
+  const isCI=a?.size==='Column inch',isPaid=a?.status==='Paid';
+  el.innerHTML=`<div class="drawer ad-d" style="margin-bottom:.875rem;border-radius:8px">
+    <div class="dhd"><span>&#128176; ${a?'Edit ad':'New advertisement'}</span><button class="xbtn" onclick="closeAdDrawer()">&times;</button></div>
+    <div class="r2"><div class="fld"><label>Advertiser / client</label><input id="ad-cl" value="${esc(a?.client||'')}"></div><div class="fld"><label>Description</label><input id="ad-desc" value="${esc(a?.desc||'')}"></div></div>
+    <div class="r3"><div class="fld"><label>Size</label><select id="ad-sz" onchange="toggleCI()">${AD_SIZES.map(s=>`<option${(a?.size||'Quarter page')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Status</label><select id="ad-st" onchange="togglePay()">${AD_STATUS.map(s=>`<option${(a?.status||'Pending')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Target page</label><select id="ad-pg">${PAGES.map(s=>`<option${(a?.page||'TBD')===s?' selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ci-extra${isCI?' show':''}" id="ci-extra" style="gap:8px;margin-bottom:.7rem"><div class="fld"><label>Columns wide</label><input type="number" id="ad-cols" value="${a?.cols||''}" placeholder="e.g. 2" min="1" max="8"></div><div class="fld"><label>Length (inches)</label><input type="number" id="ad-len" value="${a?.len||''}" placeholder="e.g. 5" step="0.5"></div></div>
+    <div class="r3"><div class="fld"><label>Run start</label><input type="date" id="ad-d1" value="${a?.dateStart||''}"></div><div class="fld"><label>Run end</label><input type="date" id="ad-d2" value="${a?.dateEnd||''}"></div><div class="fld"><label>Rate</label><input id="ad-rate" value="${esc(a?.rate||'')}" placeholder="$0.00"></div></div>
+    <div class="pay-extra${isPaid?' show':''}" id="pay-extra" style="gap:8px;margin-bottom:.7rem">
+      <div class="fld"><label>Payment type</label><select id="ad-paytype"><option value="">— select —</option>${['Cash','Check','Credit card','ACH / Transfer','Other'].map(s=>`<option${(a?.payType||'')===s?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="fld"><label>Check / ref number</label><input id="ad-payref" value="${esc(a?.payRef||'')}" placeholder="Check #, transaction ID&hellip;"></div>
+    </div>
+    <div style="border-top:1px solid #333;padding-top:.875rem;margin-top:.25rem">
+      <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.5rem">Contact information</div>
+      <div class="r2"><div class="fld"><label>Contact name</label><input id="ad-cname" value="${esc(a?.cname||'')}"></div><div class="fld"><label>Phone</label><input id="ad-phone" value="${esc(a?.phone||'')}" placeholder="701-555-0000"></div></div>
+      <div class="r2"><div class="fld"><label>Email</label><input type="email" id="ad-email" value="${esc(a?.email||'')}" placeholder="name@example.com"></div><div class="fld"><label>Mailing address</label><input id="ad-addr" value="${esc(a?.addr||'')}" placeholder="123 Main St, City, ND"></div></div>
+    </div>
+    <div class="r2" style="margin-top:.5rem">
+      <div class="fld"><label>Notes</label><input id="ad-notes" value="${esc(a?.notes||'')}"></div>
+      <div class="fld"><label style="display:flex;align-items:center;gap:8px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="ad-tear" ${a?.tearsheet?'checked':''} style="width:15px;height:15px;accent-color:#FBBF24;cursor:pointer"> Tear sheet required</label></div>
+    </div>
+    <div class="dfoot"><div>${a?`<button class="del" onclick="delAd('${a.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeAdDrawer()">Cancel</button><button class="btn btn-amber" onclick="saveAd(${a?`'${a.id}'`:'null'})">Save ad</button></div></div>
+  </div>`;
+}
+function toggleCI(){const v=document.getElementById('ad-sz')?.value,b=document.getElementById('ci-extra');if(b)b.className='ci-extra'+(v==='Column inch'?' show':'')}
+function togglePay(){const v=document.getElementById('ad-st')?.value,b=document.getElementById('pay-extra');if(b)b.className='pay-extra'+(v==='Paid'?' show':'')}
+function saveAd(id){
+  const client=document.getElementById('ad-cl').value.trim();if(!client)return;
+  const sz=document.getElementById('ad-sz').value,st=document.getElementById('ad-st').value;
+  const ads=load('ads'),obj={client,desc:document.getElementById('ad-desc').value.trim(),size:sz,status:st,page:document.getElementById('ad-pg').value,dateStart:document.getElementById('ad-d1').value,dateEnd:document.getElementById('ad-d2').value,rate:document.getElementById('ad-rate').value.trim(),cols:sz==='Column inch'?document.getElementById('ad-cols').value:'',len:sz==='Column inch'?document.getElementById('ad-len').value:'',payType:st==='Paid'?document.getElementById('ad-paytype').value:'',payRef:st==='Paid'?document.getElementById('ad-payref').value.trim():'',cname:document.getElementById('ad-cname').value.trim(),phone:document.getElementById('ad-phone').value.trim(),email:document.getElementById('ad-email').value.trim(),addr:document.getElementById('ad-addr').value.trim(),notes:document.getElementById('ad-notes').value.trim(),tearsheet:document.getElementById('ad-tear').checked};
+  if(id){const a=ads.find(x=>x.id===id);if(a)Object.assign(a,obj);}else ads.push({id:uid(),...obj});
+  save('ads',ads);closeAdDrawer();
+}
+function delAd(id){if(!confirm('Delete?'))return;save('ads',load('ads').filter(x=>x.id!==id));closeAdDrawer()}
+function renderAds(){
+  const el=document.getElementById('adlist');if(!el)return;
+  let ads=load('ads');if(fAdSt!=='All')ads=ads.filter(x=>x.status===fAdSt);
+  ads.sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
+  const sc={'Confirmed':'#22C55E','Pending':'#FBBF24','Invoiced':'#3B82F6','Paid':'#14B8A6','Cancelled':'#555'};
+  if(!ads.length){el.innerHTML='<div class="empty">No ads yet.</div>';return;}
+  el.innerHTML=ads.map(a=>`<div class="list-card" onclick="openAdDrawer('${a.id}')">
+    <div class="lbar" style="background:${sc[a.status]||'#555'}"></div>
+    <div class="lmain"><div class="ltitle">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</div>
+    <div class="lmeta"><span class="tag" style="color:${sc[a.status]}">${a.status}</span><span class="tag">${a.size}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</span>${a.page?`<span class="tag">${esc(a.page)}</span>`:''} ${a.dateStart?`<span class="tag">${fmtDk(a.dateStart)}</span>`:''} ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''} ${a.tearsheet?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''} ${a.payType?`<span class="tag" style="color:#14B8A6">${esc(a.payType)}${a.payRef?' #'+esc(a.payRef):''}</span>`:''}</div></div>
+    <div class="lacts"><button class="xbtn" aria-label="Edit">&#9998;</button></div>
+  </div>`).join('');
+}
+
+function renderSpFilters(){
+  const el=document.getElementById('sp-filters');if(!el)return;
+  el.innerHTML=`<span class="flbl">Sport:</span>`+['All',...SPORT_TYPES].map(s=>`<button class="chip${fSport===s?' on':''}" onclick="setFSp('${s}')">${s}</button>`).join('');
+}
+function setFSp(v){fSport=v;renderSpFilters();renderSports()}
+function openSportDrawer(id){spOpen=true;spId=id;renderSpDrawer();renderSports()}
+function closeSportDrawer(){spOpen=false;spId=null;renderSpDrawer();renderSports()}
+function renderSpDrawer(){
+  const el=document.getElementById('sp-form-area');if(!el)return;
+  if(!spOpen){el.innerHTML='';return;}
+  const sports=load('sports'),s=spId?sports.find(x=>x.id===spId):null;
+  el.innerHTML=`<div class="drawer sp-d" style="margin-bottom:.875rem;border-radius:8px">
+    <div class="dhd"><span>&#127942; ${s?'Edit event':'New sport / school event'}</span><button class="xbtn" onclick="closeSportDrawer()">&times;</button></div>
+    <div class="r3"><div class="fld"><label>Event / game</label><input id="sp-t" value="${esc(s?.title||'')}"></div><div class="fld"><label>Sport</label><select id="sp-sp">${SPORT_TYPES.map(t=>`<option${(s?.sport||'Other')===t?' selected':''}>${t}</option>`).join('')}</select></div><div class="fld"><label>Date &amp; time</label><input type="datetime-local" id="sp-dt" value="${s?.date||''}"></div></div>
+    <div class="r3"><div class="fld"><label>Opponent</label><input id="sp-opp" value="${esc(s?.opponent||'')}"></div><div class="fld"><label>Location</label><input id="sp-loc" value="${esc(s?.location||'')}"></div><div class="fld"><label>Reporter</label><select id="sp-rep">${repOpts(s?.reporter||'')}</select></div></div>
+    <div class="r2"><div class="fld"><label>Notes</label><input id="sp-notes" value="${esc(s?.notes||'')}"></div><div class="fld"><label style="display:flex;align-items:center;gap:7px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="sp-cov" ${s?.covering?'checked':''} style="width:15px;height:15px;accent-color:#22C55E"> Covering this event</label></div></div>
+    <div class="dfoot"><div>${s?`<button class="del" onclick="delSp('${s.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeSportDrawer()">Cancel</button><button class="btn btn-green" onclick="saveSp(${s?`'${s.id}'`:'null'})">Save</button></div></div>
+  </div>`;
+}
+function saveSp(id){
+  const title=document.getElementById('sp-t').value.trim();if(!title)return;
+  const sports=load('sports'),obj={title,sport:document.getElementById('sp-sp').value,date:document.getElementById('sp-dt').value,opponent:document.getElementById('sp-opp').value.trim(),location:document.getElementById('sp-loc').value.trim(),reporter:document.getElementById('sp-rep').value,notes:document.getElementById('sp-notes').value.trim(),covering:document.getElementById('sp-cov').checked};
+  if(id){const s=sports.find(x=>x.id===id);if(s)Object.assign(s,obj);}else sports.push({id:uid(),...obj});
+  save('sports',sports);closeSportDrawer();
+}
+function toggleCov(id){const s=load('sports'),x=s.find(x=>x.id===id);if(!x)return;x.covering=!x.covering;save('sports',s);renderSports()}
+function delSp(id){if(!confirm('Delete?'))return;save('sports',load('sports').filter(x=>x.id!==id));closeSportDrawer()}
+function renderSports(){
+  const el=document.getElementById('sportlist');if(!el)return;
+  let sports=load('sports');if(fSport!=='All')sports=sports.filter(x=>x.sport===fSport);
+  sports.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!sports.length){el.innerHTML='<div class="empty">No events yet.</div>';return;}
+  el.innerHTML=sports.map(s=>`<div class="sportcard ${s.covering?'cov':'nocov'}">
+    <div class="chkbox${s.covering?' on':''}" onclick="toggleCov('${s.id}')">${s.covering?'&#10003;':''}</div>
+    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</div>
+    <div class="lmeta" style="margin-top:3px"><span class="tag" style="${s.covering?'color:#22C55E;border-color:#22C55E44':'color:#555'}">${s.covering?'Covering':'Not covering'}</span><span class="tag">${esc(s.sport)}</span>${s.date?`<span class="tag">${new Date(s.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`:''} ${s.location?`<span class="tag">${esc(s.location)}</span>`:''} ${s.reporter?`<span class="tag">${esc(s.reporter)}</span>`:''}</div></div>
+    <button class="xbtn" onclick="openSportDrawer('${s.id}')">&#9998;</button>
+  </div>`).join('');
+}
+
+function openRepDrawer(id){repOpen=true;repId=id;renderRepDrawer()}
+function closeRepDrawer(){repOpen=false;repId=null;renderRepDrawer();renderReporters()}
+function renderRepDrawer(){
+  const el=document.getElementById('rep-form-area');if(!el)return;
+  if(!repOpen){el.innerHTML='';return;}
+  const reps=load('reporters'),r=repId?reps.find(x=>x.id===repId):null;
+  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px">
+    <div class="dhd"><span>&#128101; ${r?'Edit reporter':'Add reporter'}</span><button class="xbtn" onclick="closeRepDrawer()">&times;</button></div>
+    <div class="r3"><div class="fld"><label>Name</label><input id="rp-n" value="${esc(r?.name||'')}"></div><div class="fld"><label>Beat</label><input id="rp-b" value="${esc(r?.beat||'')}"></div><div class="fld"><label>Phone</label><input id="rp-ph" value="${esc(r?.phone||'')}" placeholder="701-555-0000"></div></div>
+    <div class="r2"><div class="fld"><label>Email</label><input id="rp-c" value="${esc(r?.contact||'')}"></div><div class="fld"><label>Notes</label><input id="rp-notes" value="${esc(r?.notes||'')}"></div></div>
+    <div class="dfoot"><div>${r?`<button class="del" onclick="delRep('${r.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeRepDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveRep(${r?`'${r.id}'`:'null'})">Save</button></div></div>
+  </div>`;
+}
+function saveRep(id){
+  const name=document.getElementById('rp-n').value.trim();if(!name)return;
+  const reps=load('reporters'),obj={name,beat:document.getElementById('rp-b').value.trim(),phone:document.getElementById('rp-ph').value.trim(),contact:document.getElementById('rp-c').value.trim(),notes:document.getElementById('rp-notes').value.trim()};
+  if(id){const r=reps.find(x=>x.id===id);if(r)Object.assign(r,obj);}else reps.push({id:uid(),...obj});
+  save('reporters',reps);closeRepDrawer();
+}
+function delRep(id){if(!confirm('Delete?'))return;save('reporters',load('reporters').filter(x=>x.id!==id));closeRepDrawer()}
+function renderReporters(){
+  const el=document.getElementById('replist');if(!el)return;
+  const reps=load('reporters');
+  if(!reps.length){el.innerHTML='<div class="empty">No reporters yet.</div>';return;}
+  el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')">
+    <div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#3B82F6;flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div class="lmain"><div class="ltitle">${esc(r.name)}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div>
+    <div class="lacts"><button class="xbtn">&#9998;</button></div>
+  </div>`).join('');
+}
+function openPrintModal(){
+  const reps=load('reporters');
+  document.getElementById('modal-root').innerHTML=`<div class="print-bg" onclick="if(event.target===this)closePM()">
+    <div class="print-box">
+      <h3>&#128438; Print assignment sheet</h3>
+      <div class="pr-opt"><input type="radio" name="prpt" id="pr-all" value="__all__" checked><label for="pr-all">Full sheet &mdash; all reporters</label></div>
+      ${reps.map(r=>`<div class="pr-opt"><input type="radio" name="prpt" id="pr-${r.id}" value="${esc(r.name)}"><label for="pr-${r.id}">&#128101; ${esc(r.name)} <span style="color:#555;font-size:11px">&mdash; ${esc(r.beat||'reporter')}</span></label></div>`).join('')}
+      <div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem"><button class="btn" onclick="closePM()">Cancel</button><button class="btn btn-green" onclick="doPrint()">&#128438; Print</button></div>
+    </div>
+  </div>`;
+}
+function closePM(){document.getElementById('modal-root').innerHTML=''}
+
+function doPrint(){
+  const radio=document.querySelector('input[name=prpt]:checked');
+  const sel=radio?radio.value:'__all__';closePM();
+  const allStories=load('stories');
+  const d0=daysList(wkOff),d1=daysList(wkOff+1);
+  const s0=dk(d0[0]),e0=dk(d0[6]),s1=dk(d1[0]),e1=dk(d1[6]);
+  const filtered=sel==='__all__'?allStories:allStories.filter(x=>(x.reporter||'').trim()===sel.trim());
+  const tw=filtered.filter(x=>x.due>=s0&&x.due<=e0).sort((a,b)=>a.due.localeCompare(b.due));
+  const nw=filtered.filter(x=>x.due>=s1&&x.due<=e1).sort((a,b)=>a.due.localeCompare(b.due));
+  const allSp=load('sports').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const allAds=load('ads').filter(x=>x.dateStart>=s0&&x.dateStart<=e1).sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
+  const clItems=loadCL();
+  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()}`;
+  const lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`;
+  const pageTitle=sel==='__all__'?'Full Assignment Sheet':`Assignment Sheet \u2014 ${sel}`;
+  const tr=s=>`<tr${s.urgent?' style="background:#fff0f0"':''}><td>${s.urgent?'\u26a0 ':''}${esc(s.headline||'(untitled)')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
+  const pw=window.open('','_blank');
+  pw.document.write(`<!DOCTYPE html><html><head><title>${pageTitle} \u2014 The Standard</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:1.5rem;max-width:960px;margin:0 auto}h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:.4rem;margin-bottom:.2rem}h2{font-size:12px;margin:1rem 0 .4rem;border-bottom:1px solid #ccc;padding-bottom:.2rem;text-transform:uppercase;letter-spacing:.05em}table{width:100%;border-collapse:collapse;margin-bottom:.75rem;font-size:11px}th{text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:10px;text-transform:uppercase;background:#f5f5f5}td{padding:4px 6px;border-bottom:1px solid #eee;vertical-align:top}tr:nth-child(even) td{background:#fafafa}.sub{font-size:11px;color:#555;margin-bottom:.75rem}.dl{color:#8B4513;font-weight:bold}.none{color:#888;font-style:italic;font-size:11px}.cl-section{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.04em;color:#555;padding:6px 0 2px}.cl-row{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid #eee;font-size:11px}.cl-box{width:12px;height:12px;border:1px solid #999;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}@media print{@page{margin:1cm}body{padding:.25rem}}</style></head><body>
+  <h1>The Standard</h1>
+  <div class="sub">${pageTitle} &middot; ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} &middot; <span class="dl">Print deadline: Monday 2:00 PM</span></div>
+  <h2>This week (${lbl0}) &mdash; publishes Wednesday</h2>${tw.length?`<table><thead><tr><th>Headline</th><th>Reporter</th><th>Section</th><th>Status</th><th>Page</th><th>Due</th><th>Words</th></tr></thead><tbody>${tw.map(tr).join('')}</tbody></table>`:'<p class="none">No stories.</p>'}
+  <h2>Next week (${lbl1}) &mdash; publishes Wednesday</h2>${nw.length?`<table><thead><tr><th>Headline</th><th>Reporter</th><th>Section</th><th>Status</th><th>Page</th><th>Due</th><th>Words</th></tr></thead><tbody>${nw.map(tr).join('')}</tbody></table>`:'<p class="none">No stories.</p>'}
+  ${sel==='__all__'&&allSp.length?`<h2>School &amp; sports events</h2><table><thead><tr><th>Event</th><th>Sport</th><th>Date/time</th><th>Location</th><th>Reporter</th><th>Covering?</th></tr></thead><tbody>${allSp.map(s=>`<tr><td>${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</td><td>${esc(s.sport)}</td><td>${s.date?new Date(s.date).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</td><td>${esc(s.location||'\u2014')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${s.covering?'YES':'no'}</td></tr>`).join('')}</tbody></table>`:''}
+  ${sel==='__all__'&&allAds.length?`<h2>Advertising (this &amp; next week)</h2><table><thead><tr><th>Client</th><th>Size</th><th>Page</th><th>Run dates</th><th>Status</th><th>Rate</th><th>Tear sheet</th><th>Contact</th></tr></thead><tbody>${allAds.map(a=>`<tr><td>${esc(a.client)}</td><td>${esc(a.size)}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</td><td>${esc(a.page||'TBD')}</td><td>${fmtDk(a.dateStart)}${a.dateEnd&&a.dateEnd!==a.dateStart?' \u2192 '+fmtDk(a.dateEnd):''}</td><td>${esc(a.status)}${a.payType?' ('+esc(a.payType)+(a.payRef?' #'+esc(a.payRef):'')+')':''}</td><td>${esc(a.rate||'\u2014')}</td><td>${a.tearsheet?'Yes':''}</td><td>${esc(a.cname||'')}${a.phone?' '+esc(a.phone):''}${a.email?' '+esc(a.email):''}</td></tr>`).join('')}</tbody></table>`:''}
+  ${sel==='__all__'?`<h2>Production checklist</h2>${Object.entries(clItems.reduce((acc,t)=>{(acc[t.section]=acc[t.section]||[]).push(t);return acc},{})).map(([sec,items])=>`<div class="cl-section">${esc(sec)}</div>${items.map(t=>`<div class="cl-row"><div class="cl-box">${t.done?'&#10003;':''}</div><span${t.done?' style="text-decoration:line-through;color:#999"':''}>${esc(t.text)}</span></div>`).join('')}`).join('')}`:''}
+  </body></html>`);
+  pw.document.close();setTimeout(()=>pw.print(),350);
+}
+
+function seedData(){
+  if(load('reporters').length>0)return;
+  const reps=[{id:uid(),name:'Sarah Mitchell',beat:'City Hall / Politics',phone:'701-555-0101',contact:'smitchell@thestandard.com',notes:''},{id:uid(),name:'Tom Becker',beat:'Sports',phone:'701-555-0102',contact:'tbecker@thestandard.com',notes:''},{id:uid(),name:'Linda Okafor',beat:'Schools / Education',phone:'701-555-0103',contact:'lokafor@thestandard.com',notes:''},{id:uid(),name:'Dale Vance',beat:'Business / Agriculture',phone:'701-555-0104',contact:'dvance@thestandard.com',notes:''}];
+  save('reporters',reps);
+  const now=new Date(),sun=new Date(now);sun.setDate(now.getDate()-now.getDay());sun.setHours(0,0,0,0);
+  const wd=n=>{const d=new Date(sun);d.setDate(sun.getDate()+n);return dk(d)};
+  const stories=[
+    {id:uid(),headline:'City council approves $2.4M road project on Main St',subhead:'Work to begin spring',reporter:'Sarah Mitchell',section:'News',status:'Writing',due:wd(3),page:'Front page',wordcount:'600',sources:'Mayor Johnson, City Engineer Dave Park',notes:'Get quote from business owners',photoAssign:'Staff',photoStatus:'Needed',layout:'Above fold',priority:'High',urgent:false},
+    {id:uid(),headline:'School board to vote on new curriculum standards',subhead:'',reporter:'Linda Okafor',section:'News',status:'Reporting',due:wd(1),page:'Page 2',wordcount:'500',sources:'Supt. Helen Cross',notes:'Attend Tuesday meeting, file Monday noon',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'High',urgent:true},
+    {id:uid(),headline:'Hawks basketball eyes state tournament berth',subhead:'Season record 14-3',reporter:'Tom Becker',section:'Sports',status:'Writing',due:wd(3),page:'Sports page',wordcount:'500',sources:'Coach Dan Sutter',notes:'Get action photo from Friday game',photoAssign:'Tom Becker',photoStatus:'Received',layout:'',priority:'Normal',urgent:false},
+    {id:uid(),headline:'Grain elevator expansion brings 12 new jobs',subhead:'',reporter:'Dale Vance',section:'Business',status:'Editing',due:wd(3),page:'Page 3',wordcount:'400',sources:'Owner Rick Halverson',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false},
+    {id:uid(),headline:'Local artist mural unveiled at community center',subhead:'',reporter:'Sarah Mitchell',section:'Arts & Culture',status:'Filed',due:wd(3),page:'Inside',wordcount:'350',sources:'Artist Donna Reese',notes:'',photoAssign:'Staff',photoStatus:'Done',layout:'',priority:'Normal',urgent:false},
+    {id:uid(),headline:'County commissioners to expand recycling program',subhead:'',reporter:'Dale Vance',section:'News',status:'Idea',due:wd(10),page:'TBD',wordcount:'',sources:'Commissioner Lisa Berg',notes:'Follow up after Thursday meeting',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false},
+    {id:uid(),headline:'Spring sports preview: what to watch this season',subhead:'',reporter:'Tom Becker',section:'Sports',status:'Assigned',due:wd(10),page:'Sports page',wordcount:'700',sources:'All head coaches',notes:'Need individual coach quotes',photoAssign:'',photoStatus:'Needed',layout:'',priority:'Normal',urgent:false},
+    {id:uid(),headline:'New pharmacy opens downtown',subhead:'',reporter:'Linda Okafor',section:'Business',status:'Reporting',due:wd(10),page:'Page 2',wordcount:'400',sources:'Owner Jan Friese',notes:'',photoAssign:'',photoStatus:'Needed',layout:'',priority:'Normal',urgent:false},
+  ];
+  save('stories',stories);
+  const events=[{id:uid(),title:'City council meeting',date:wd(1),note:'7:00 PM \u2014 City Hall'},{id:uid(),title:'School board meeting',date:wd(2),note:'6:30 PM \u2014 District office'},{id:uid(),title:'County commissioners',date:wd(4),note:'9:00 AM \u2014 Courthouse'}];
+  save('events',events);
+  const ads=[
+    {id:uid(),client:'Farmers State Bank',desc:'Spring loan rates',size:'Quarter page',status:'Confirmed',page:'Page 2',dateStart:wd(3),dateEnd:wd(3),rate:'$180',cols:'',len:'',payType:'',payRef:'',cname:'Amy Hofer',phone:'701-555-0142',email:'amy@farmersbank.com',addr:'100 Main St, Westhope ND',notes:'',tearsheet:true},
+    {id:uid(),client:'Main Street Hardware',desc:'Spring sale',size:'Half page',status:'Paid',page:'Back page',dateStart:wd(3),dateEnd:wd(10),rate:'$290/wk',cols:'',len:'',payType:'Check',payRef:'4421',cname:'Greg Plum',phone:'701-555-0155',email:'greg@mshardware.com',addr:'205 Main St, Westhope ND',notes:'Running 4 weeks',tearsheet:false},
+    {id:uid(),client:'Anderson Auto Body',desc:'',size:'Column inch',status:'Pending',page:'Inside',dateStart:wd(10),dateEnd:wd(10),rate:'$12/ci',cols:'2',len:'5',payType:'',payRef:'',cname:'Bob Anderson',phone:'701-555-0188',email:'bob@andersonauto.com',addr:'312 Hwy 83, Westhope ND',notes:'',tearsheet:false},
+    {id:uid(),client:'Westhope Floral',desc:"Mother's Day special",size:'Eighth page',status:'Invoiced',page:'Front page',dateStart:wd(10),dateEnd:wd(10),rate:'$95',cols:'',len:'',payType:'',payRef:'',cname:'Sue Hanson',phone:'701-555-0166',email:'sue@westhopefloral.com',addr:'118 2nd St, Westhope ND',notes:'',tearsheet:true},
+  ];
+  save('ads',ads);
+  const sp=[
+    {id:uid(),title:'Hawks vs. Minot High',sport:'Basketball',date:new Date(sun.getTime()+86400000*6).toISOString().slice(0,16),opponent:'Minot High',location:'Hawks Gymnasium',reporter:'Tom Becker',notes:'Regional playoff',covering:true},
+    {id:uid(),title:'Hawks Track Home Invitational',sport:'Track',date:new Date(sun.getTime()+86400000*9).toISOString().slice(0,16),opponent:'',location:'Westhope Track',reporter:'Tom Becker',notes:'8 teams',covering:true},
+    {id:uid(),title:'JV Baseball vs. Kenmare',sport:'Baseball',date:new Date(sun.getTime()+86400000*9).toISOString().slice(0,16),opponent:'Kenmare',location:'Westhope Field',reporter:'',notes:'',covering:false},
+    {id:uid(),title:'Girls Soccer Scrimmage',sport:'Soccer',date:new Date(sun.getTime()+86400000*5).toISOString().slice(0,16),opponent:'Burlington',location:'West Field',reporter:'',notes:'Pre-season',covering:false},
+  ];
+  save('sports',sp);
+}
+
+setInterval(updateDeadline,60000);
+</script>
+</body>
+</html>
