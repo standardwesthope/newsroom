@@ -271,19 +271,49 @@ async function gasRequest(params){
 }
 
 function isFormOpen(){ return !!(openStoryId || evOpen || adOpen || spOpen || repOpen); }
+
+// Local storage keys for offline backup
+const LS_KEYS = ['stories','events','ads','sports','reporters'];
+function backupToLocal(){
+  LS_KEYS.forEach(k=>{ try{ localStorage.setItem('ts_'+k, JSON.stringify(DB[k])); }catch(e){} });
+}
+function restoreFromLocal(){
+  LS_KEYS.forEach(k=>{ try{ const v=localStorage.getItem('ts_'+k); if(v) DB[k]=JSON.parse(v); }catch(e){} });
+}
+function localHasData(){
+  return LS_KEYS.some(k=>{ try{ const v=localStorage.getItem('ts_'+k); return v&&JSON.parse(v).length>0; }catch(e){return false;} });
+}
+
 async function loadFromSheets(){
+  if(isFormOpen()){ setSyncStatus('live','Paused \u2014 form open'); return; }
   setSyncStatus('syncing','Syncing...');
   try {
     const tabs=['stories','events','ads','sports','reporters'];
+    let sheetHasData=false;
+    const fresh={};
     for(const tab of tabs){
       const res=await gasRequest({action:'read',tab});
-      if(res.ok) DB[tab]=res.data||[];
+      if(res.ok){ fresh[tab]=res.data||[]; if(fresh[tab].length>0) sheetHasData=true; }
     }
+    if(!sheetHasData && localHasData()){
+      // Sheet is empty but we have local data — push local up to sheet
+      showSyncBar('Uploading your data to Google Sheets...','info');
+      for(const tab of tabs){
+        if(DB[tab]&&DB[tab].length>0){
+          await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(DB[tab]))});
+        }
+      }
+      showSyncBar('Data uploaded to Google Sheets!','success');
+    } else {
+      // Sheet has data — use it
+      tabs.forEach(tab=>{ DB[tab]=fresh[tab]||[]; });
+    }
+    backupToLocal();
     lastSync=new Date();
     if(!isFormOpen()) render();
     setSyncStatus('live','Live \u2014 '+lastSync.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   } catch(e){
-    setSyncStatus('error','Sync error');
+    setSyncStatus('error','Offline');
     showSyncBar('Could not reach Google Sheets \u2014 working offline','error');
   }
 }
@@ -291,16 +321,16 @@ async function loadFromSheets(){
 async function saveTab(tab){
   setSyncStatus('syncing','Saving...');
   try {
+    backupToLocal();
     await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(DB[tab]))});
     setSyncStatus('live','Saved \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   } catch(e){
-    setSyncStatus('error','Save error');
-    showSyncBar('Could not save to Google Sheets','error');
+    setSyncStatus('error','Save error \u2014 data kept locally');
+    showSyncBar('Could not save to Google Sheets \u2014 data saved locally','error');
   }
 }
 
 function scheduleSave(tab){
-  // Debounce — save 1.5s after last change
   clearTimeout(syncTimer);
   syncTimer=setTimeout(()=>saveTab(tab),1500);
 }
@@ -315,10 +345,14 @@ function load(k){return DB[k]||[]}
 function save(k,v){DB[k]=v;scheduleSave(k)}
 
 async function initApp(){
-  // Initialize sheets then load data
+  // First restore from local backup so screen isn't blank while loading
+  restoreFromLocal();
+  render();
+  // Initialize sheets
   try { await gasRequest({action:'init'}); } catch(e){}
+  // Then sync with sheets
   await loadFromSheets();
-  // Auto-refresh every 60 seconds
+  // Auto-refresh every 60 seconds — only when no form is open
   setInterval(()=>{ if(!isFormOpen()) loadFromSheets(); }, 60000);
   setInterval(updateDeadline, 60000);
 }
