@@ -318,7 +318,11 @@ async function initApp(){
   try { await gasRequest({action:'init'}); } catch(e){}
   await loadFromSheets();
   // Auto-refresh every 60 seconds
-  setInterval(()=>loadFromSheets(), 60000);
+  setInterval(()=>{
+    // Don't sync if a form is open — would wipe unsaved work
+    const anyOpen = openStoryId || evOpen || adOpen || spOpen || repOpen;
+    if(!anyOpen) loadFromSheets();
+  }, 60000);
   setInterval(updateDeadline, 60000);
 }
 
