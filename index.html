@@ -16,11 +16,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pw-box button{width:100%;padding:10px;border-radius:7px;border:none;background:#185FA5;color:#fff;font-size:14px;font-weight:500;cursor:pointer}
 .pw-box button:hover{background:#0C447C}
 .pw-err{color:#EF4444;font-size:12px;margin-top:.5rem;display:none}
-.app{padding:.875rem .875rem 2rem}
+#sync-bar{position:fixed;top:0;left:0;right:0;background:#185FA5;color:#fff;font-size:12px;padding:6px 16px;display:flex;align-items:center;justify-content:space-between;z-index:100;transform:translateY(-100%);transition:transform .3s}
+#sync-bar.show{transform:translateY(0)}
+#sync-bar.error{background:#7f1d1d}
+#sync-bar.success{background:#14532d}
+.app{padding:.875rem .875rem 2rem;margin-top:0}
 .mast{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:.875rem;border-bottom:1px solid #333;margin-bottom:.875rem}
 .logo{font-size:20px;font-weight:500;color:#fff;display:flex;align-items:center;gap:8px;margin-right:auto}
 .sub{font-size:11px;color:#666;margin-top:2px}
 .deadline-pill{font-size:12px;background:#2a1a0a;border:1px solid #854F0B;border-radius:20px;padding:4px 12px;color:#EF9F27;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;display:inline-block;margin-right:4px;flex-shrink:0}
+.sync-dot.syncing{background:#FBBF24;animation:pulse 1s infinite}
+.sync-dot.error{background:#EF4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:7px;border:1px solid #444;background:#2a2a2a;cursor:pointer;font-size:13px;color:#e8e8e8;font-family:inherit;transition:background .12s;line-height:1}
 .btn:hover{background:#333}
 .btn-blue{background:#185FA5;color:#fff;border-color:#185FA5}
@@ -135,12 +143,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="pw-screen">
   <div class="pw-box">
     <h2>&#128240; The Standard</h2>
-    <p>Newsroom planner — staff access only</p>
+    <p>Newsroom planner &mdash; staff access only</p>
     <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPW()">
     <button onclick="checkPW()">Enter</button>
     <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
   </div>
 </div>
+
+<div id="sync-bar">
+  <span id="sync-msg">Syncing&hellip;</span>
+  <button onclick="document.getElementById('sync-bar').classList.remove('show')" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px">&times;</button>
+</div>
+
 <div class="app" id="main-app" style="display:none">
 <div class="mast">
   <div>
@@ -148,6 +162,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub">Publishes Wednesday &nbsp;&middot;&nbsp; Print deadline Monday 2:00 PM</div>
   </div>
   <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
+  <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666">
+    <span class="sync-dot" id="sync-dot"></span><span id="sync-status">Live</span>
+  </div>
+  <button class="btn btn-sm" onclick="syncAll(true)">&#8635; Sync</button>
   <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
   <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Reporters</button>
 </div>
@@ -161,8 +179,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tc on" id="tc-stories">
   <div class="stats-row" id="stats"></div>
   <div class="wk-nav">
-    <button class="btn-icon" onclick="shiftWeek(-1)" title="Previous 2 weeks">&#8592;</button>
-    <button class="btn-icon" onclick="shiftWeek(1)" title="Next 2 weeks">&#8594;</button>
+    <button class="btn-icon" onclick="shiftWeek(-1)">&#8592;</button>
+    <button class="btn-icon" onclick="shiftWeek(1)">&#8594;</button>
     <span class="wk-str" id="wstr"></span>
     <button class="btn btn-sm" onclick="shiftWeek(0)">&#128197; Today</button>
     <button class="btn btn-blue btn-sm" style="margin-left:auto" onclick="addNewStory()">+ Add story</button>
@@ -196,15 +214,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="modal-root"></div>
 </div>
 <script>
-// PASSWORD
 const CORRECT_PW = 'coffeeshop';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1Mqr_kIsxlxJh7HEXfsTjnfvF3o7L5Ff2axVBMIDywe-kY3PiVJ7ttN2rJr1Mo287/exec';
+
+// ---- PASSWORD ----
 function checkPW(){
-  const v = document.getElementById('pw-input').value;
-  if(v === CORRECT_PW){
-    sessionStorage.setItem('ts_auth', CORRECT_PW);
+  const v=document.getElementById('pw-input').value;
+  if(v===CORRECT_PW){
+    sessionStorage.setItem('ts_auth',CORRECT_PW);
     document.getElementById('pw-screen').style.display='none';
     document.getElementById('main-app').style.display='block';
-    seedData(); render();
+    initApp();
   } else {
     document.getElementById('pw-err').style.display='block';
     document.getElementById('pw-input').value='';
@@ -215,12 +235,94 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(sessionStorage.getItem('ts_auth')===CORRECT_PW){
     document.getElementById('pw-screen').style.display='none';
     document.getElementById('main-app').style.display='block';
-    seedData(); render();
+    initApp();
   } else {
     document.getElementById('pw-input').focus();
   }
 });
 
+// ---- SYNC ENGINE ----
+// Local cache — data lives here in memory, synced to/from Sheets
+let DB = {stories:[],events:[],ads:[],sports:[],reporters:[],checklist:[]};
+let syncTimer = null;
+let lastSync = null;
+
+function setSyncStatus(state, msg){
+  const dot=document.getElementById('sync-dot');
+  const txt=document.getElementById('sync-status');
+  if(!dot||!txt)return;
+  dot.className='sync-dot'+(state==='syncing'?' syncing':state==='error'?' error':'');
+  txt.textContent=msg||'Live';
+}
+
+function showSyncBar(msg, type='info'){
+  const bar=document.getElementById('sync-bar');
+  const msgEl=document.getElementById('sync-msg');
+  if(!bar||!msgEl)return;
+  msgEl.textContent=msg;
+  bar.className='show '+(type==='error'?'error':type==='success'?'success':'');
+  setTimeout(()=>bar.classList.remove('show'),3000);
+}
+
+async function gasRequest(params){
+  const url=GAS_URL+'?'+Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const res=await fetch(url);
+  return res.json();
+}
+
+async function loadFromSheets(){
+  setSyncStatus('syncing','Syncing...');
+  try {
+    const tabs=['stories','events','ads','sports','reporters'];
+    for(const tab of tabs){
+      const res=await gasRequest({action:'read',tab});
+      if(res.ok) DB[tab]=res.data||[];
+    }
+    lastSync=new Date();
+    setSyncStatus('live','Live \u2014 '+lastSync.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+    render();
+  } catch(e){
+    setSyncStatus('error','Sync error');
+    showSyncBar('Could not reach Google Sheets \u2014 working offline','error');
+  }
+}
+
+async function saveTab(tab){
+  setSyncStatus('syncing','Saving...');
+  try {
+    await gasRequest({action:'write',tab,rows:encodeURIComponent(JSON.stringify(DB[tab]))});
+    setSyncStatus('live','Saved \u2014 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  } catch(e){
+    setSyncStatus('error','Save error');
+    showSyncBar('Could not save to Google Sheets','error');
+  }
+}
+
+function scheduleSave(tab){
+  // Debounce — save 1.5s after last change
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>saveTab(tab),1500);
+}
+
+async function syncAll(manual=false){
+  if(manual) showSyncBar('Refreshing from Google Sheets...');
+  await loadFromSheets();
+  if(manual) showSyncBar('All data refreshed!','success');
+}
+
+function load(k){return DB[k]||[]}
+function save(k,v){DB[k]=v;scheduleSave(k)}
+
+async function initApp(){
+  // Initialize sheets then load data
+  try { await gasRequest({action:'init'}); } catch(e){}
+  await loadFromSheets();
+  // Auto-refresh every 60 seconds
+  setInterval(()=>loadFromSheets(), 60000);
+  setInterval(updateDeadline, 60000);
+}
+
+// ---- CONSTANTS ----
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const SECTIONS=['News','Sports','Opinion','Feature','Business','Arts & Culture','Obituaries','Community','Letters','Other'];
@@ -252,10 +354,6 @@ let wkOff=0,activeTab='stories',openStoryId=null,fAdSt='All',fSport='All';
 let evOpen=false,evId=null,adOpen=false,adId=null,spOpen=false,spId=null,repOpen=false,repId=null;
 
 const uid=()=>Math.random().toString(36).slice(2,9);
-const dbget=()=>{try{return JSON.parse(localStorage.getItem('std6')||'{}')}catch(e){return{}}};
-const dbset=d=>{try{localStorage.setItem('std6',JSON.stringify(d))}catch(e){}};
-const load=k=>dbget()[k]||[];
-const save=(k,v)=>{const d=dbget();d[k]=v;dbset(d)};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const wkStart=off=>{const n=new Date(),d=new Date(n);d.setDate(n.getDate()-n.getDay()+(off*7));d.setHours(0,0,0,0);return d};
 const dk=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -263,9 +361,10 @@ const fmtDk=s=>{if(!s)return'';const d=new Date(s+'T12:00:00');return`${DAYS[d.g
 const daysList=off=>{const s=wkStart(off===undefined?wkOff:off);return Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})};
 const repOpts=sel=>['',  ...load('reporters').map(r=>r.name)].map(n=>`<option value="${esc(n)}"${sel===n?' selected':''}>${n||'\u2014 unassigned \u2014'}</option>`).join('');
 
+// ---- CHECKLIST (local per-browser, resets weekly) ----
 function clKey(){const d=daysList(0)[0];return'cl-'+dk(d)}
-function loadCL(){const raw=dbget()[clKey()];return raw||DEFAULT_TASKS.map(t=>({...t,done:false}))}
-function saveCL(items){const d=dbget();d[clKey()]=items;dbset(d)}
+function loadCL(){const raw=localStorage.getItem(clKey());return raw?JSON.parse(raw):DEFAULT_TASKS.map(t=>({...t,done:false}))}
+function saveCL(items){localStorage.setItem(clKey(),JSON.stringify(items))}
 function toggleCL(id){const items=loadCL(),t=items.find(x=>x.id===id);if(t)t.done=!t.done;saveCL(items);renderChecklist()}
 function addCustomTask(){
   const txt=prompt('Task description:');if(!txt||!txt.trim())return;
@@ -275,7 +374,7 @@ function addCustomTask(){
   items.push({id:uid(),day:isNaN(day)?1:day,text:txt.trim(),section,done:false,custom:true});
   saveCL(items);renderChecklist();
 }
-function deleteCLTask(id){const items=loadCL().filter(x=>x.id!==id);saveCL(items);renderChecklist()}
+function deleteCLTask(id){saveCL(loadCL().filter(x=>x.id!==id));renderChecklist()}
 function resetCL(){if(!confirm('Reset checklist?'))return;saveCL(DEFAULT_TASKS.map(t=>({...t,done:false})));renderChecklist()}
 
 function renderChecklist(){
@@ -335,6 +434,7 @@ function renderStats(){
   const tot=st.length,pend=st.filter(x=>['Idea','Assigned'].includes(x.status)).length,prog=st.filter(x=>['Reporting','Writing','Editing','Photo needed','Ready to layout'].includes(x.status)).length,done=st.filter(x=>['Filed','Done'].includes(x.status)).length;
   el.innerHTML=`<div class="stat total"><div class="stat-n">${tot}</div><div class="stat-l">Total (2 wks)</div></div><div class="stat pend"><div class="stat-n">${pend}</div><div class="stat-l">Pending</div></div><div class="stat prog"><div class="stat-n">${prog}</div><div class="stat-l">In progress</div></div><div class="stat done"><div class="stat-n">${done}</div><div class="stat-l">Filed/done</div></div>`;
 }
+
 function renderWeekGrid(weekOff){
   const d=daysList(weekOff),today=dk(new Date()),stories=load('stories'),events=load('events');
   return d.map(day=>{
@@ -347,7 +447,9 @@ function renderWeekGrid(weekOff){
     const blocks=[
       ...dayEv.map(ev=>`<div class="ev-block" style="background:#1a1510;border-left-color:#F97316" onclick="openEvDrawer('${ev.id}')"><div class="ev-title" style="color:#F97316">&#128205; ${esc(ev.title)}</div>${ev.note?`<div class="ev-meta" style="color:#7a5020">${esc(ev.note)}</div>`:''}</div>`),
       ...daySt.map(s=>{
-        const isU=!!s.urgent,bg=isU?URGENTBG:(SBGCOLOR[s.status]||'#222'),bc=isU?URGENT:(SCOLOR[s.status]||'#555'),ol=isU?`outline:1.5px solid ${URGENT};outline-offset:-1px;`:'';
+        const isU=s.urgent===true||s.urgent==='true';
+        const bg=isU?URGENTBG:(SBGCOLOR[s.status]||'#222'),bc=isU?URGENT:(SCOLOR[s.status]||'#555');
+        const ol=isU?`outline:1.5px solid ${URGENT};outline-offset:-1px;`:'';
         return`<div class="ev-block" style="background:${bg};border-left-color:${bc};${ol}" onclick="openStoryInline('${s.id}')">
           ${isU?`<span class="uflag">!</span>`:''}
           <div class="ev-title" style="color:#f0f0f0;padding-right:${isU?'14px':'0'}">${esc(s.headline||'(untitled)')}</div>
@@ -381,7 +483,8 @@ function renderStoryForm(){
   if(!openStoryId){el.innerHTML='';return;}
   const stories=load('stories'),s=stories.find(x=>x.id===openStoryId);
   if(!s){el.innerHTML='';return;}
-  const isU=!!s.urgent,topC=isU?URGENT:(SCOLOR[s.status]||'#3B82F6');
+  const isU=s.urgent===true||s.urgent==='true';
+  const topC=isU?URGENT:(SCOLOR[s.status]||'#3B82F6');
   const pgO=PAGES.map(p=>`<option${(s.page||'TBD')===p?' selected':''}>${p}</option>`).join('');
   const stO=STATUSES.map(p=>`<option${(s.status||'Idea')===p?' selected':''}>${p}</option>`).join('');
   const secO=SECTIONS.map(p=>`<option${(s.section||'News')===p?' selected':''}>${p}</option>`).join('');
@@ -438,6 +541,7 @@ function saveEv(id){
   save('events',evs);closeEvDrawer();
 }
 function delEv(id){if(!confirm('Delete?'))return;save('events',load('events').filter(x=>x.id!==id));closeEvDrawer()}
+
 function renderAdFilters(){
   const el=document.getElementById('ad-filters');if(!el)return;
   el.innerHTML=`<span class="flbl">Status:</span>`+['All',...AD_STATUS].map(s=>`<button class="chip${fAdSt===s?' on':''}" onclick="setAdSt('${s}')">${s}</button>`).join('');
@@ -456,19 +560,11 @@ function renderAdDrawer(){
     <div class="r3"><div class="fld"><label>Size</label><select id="ad-sz" onchange="toggleCI()">${AD_SIZES.map(s=>`<option${(a?.size||'Quarter page')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Status</label><select id="ad-st" onchange="togglePay()">${AD_STATUS.map(s=>`<option${(a?.status||'Pending')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Target page</label><select id="ad-pg">${PAGES.map(s=>`<option${(a?.page||'TBD')===s?' selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ci-extra${isCI?' show':''}" id="ci-extra" style="gap:8px;margin-bottom:.7rem"><div class="fld"><label>Columns wide</label><input type="number" id="ad-cols" value="${a?.cols||''}" placeholder="e.g. 2" min="1" max="8"></div><div class="fld"><label>Length (inches)</label><input type="number" id="ad-len" value="${a?.len||''}" placeholder="e.g. 5" step="0.5"></div></div>
     <div class="r3"><div class="fld"><label>Run start</label><input type="date" id="ad-d1" value="${a?.dateStart||''}"></div><div class="fld"><label>Run end</label><input type="date" id="ad-d2" value="${a?.dateEnd||''}"></div><div class="fld"><label>Rate</label><input id="ad-rate" value="${esc(a?.rate||'')}" placeholder="$0.00"></div></div>
-    <div class="pay-extra${isPaid?' show':''}" id="pay-extra" style="gap:8px;margin-bottom:.7rem">
-      <div class="fld"><label>Payment type</label><select id="ad-paytype"><option value="">— select —</option>${['Cash','Check','Credit card','ACH / Transfer','Other'].map(s=>`<option${(a?.payType||'')===s?' selected':''}>${s}</option>`).join('')}</select></div>
-      <div class="fld"><label>Check / ref number</label><input id="ad-payref" value="${esc(a?.payRef||'')}" placeholder="Check #, transaction ID&hellip;"></div>
-    </div>
-    <div style="border-top:1px solid #333;padding-top:.875rem;margin-top:.25rem">
-      <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.5rem">Contact information</div>
-      <div class="r2"><div class="fld"><label>Contact name</label><input id="ad-cname" value="${esc(a?.cname||'')}"></div><div class="fld"><label>Phone</label><input id="ad-phone" value="${esc(a?.phone||'')}" placeholder="701-555-0000"></div></div>
-      <div class="r2"><div class="fld"><label>Email</label><input type="email" id="ad-email" value="${esc(a?.email||'')}" placeholder="name@example.com"></div><div class="fld"><label>Mailing address</label><input id="ad-addr" value="${esc(a?.addr||'')}" placeholder="123 Main St, City, ND"></div></div>
-    </div>
-    <div class="r2" style="margin-top:.5rem">
-      <div class="fld"><label>Notes</label><input id="ad-notes" value="${esc(a?.notes||'')}"></div>
-      <div class="fld"><label style="display:flex;align-items:center;gap:8px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="ad-tear" ${a?.tearsheet?'checked':''} style="width:15px;height:15px;accent-color:#FBBF24;cursor:pointer"> Tear sheet required</label></div>
-    </div>
+    <div class="pay-extra${isPaid?' show':''}" id="pay-extra" style="gap:8px;margin-bottom:.7rem"><div class="fld"><label>Payment type</label><select id="ad-paytype"><option value="">— select —</option>${['Cash','Check','Credit card','ACH / Transfer','Other'].map(s=>`<option${(a?.payType||'')===s?' selected':''}>${s}</option>`).join('')}</select></div><div class="fld"><label>Check / ref number</label><input id="ad-payref" value="${esc(a?.payRef||'')}" placeholder="Check #&hellip;"></div></div>
+    <div style="border-top:1px solid #333;padding-top:.875rem;margin-top:.25rem"><div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.5rem">Contact information</div>
+    <div class="r2"><div class="fld"><label>Contact name</label><input id="ad-cname" value="${esc(a?.cname||'')}"></div><div class="fld"><label>Phone</label><input id="ad-phone" value="${esc(a?.phone||'')}" placeholder="701-555-0000"></div></div>
+    <div class="r2"><div class="fld"><label>Email</label><input type="email" id="ad-email" value="${esc(a?.email||'')}"></div><div class="fld"><label>Mailing address</label><input id="ad-addr" value="${esc(a?.addr||'')}"></div></div></div>
+    <div class="r2" style="margin-top:.5rem"><div class="fld"><label>Notes</label><input id="ad-notes" value="${esc(a?.notes||'')}"></div><div class="fld"><label style="display:flex;align-items:center;gap:8px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="ad-tear" ${a?.tearsheet===true||a?.tearsheet==='true'?'checked':''} style="width:15px;height:15px;accent-color:#FBBF24;cursor:pointer"> Tear sheet required</label></div></div>
     <div class="dfoot"><div>${a?`<button class="del" onclick="delAd('${a.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeAdDrawer()">Cancel</button><button class="btn btn-amber" onclick="saveAd(${a?`'${a.id}'`:'null'})">Save ad</button></div></div>
   </div>`;
 }
@@ -488,12 +584,7 @@ function renderAds(){
   ads.sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
   const sc={'Confirmed':'#22C55E','Pending':'#FBBF24','Invoiced':'#3B82F6','Paid':'#14B8A6','Cancelled':'#555'};
   if(!ads.length){el.innerHTML='<div class="empty">No ads yet.</div>';return;}
-  el.innerHTML=ads.map(a=>`<div class="list-card" onclick="openAdDrawer('${a.id}')">
-    <div class="lbar" style="background:${sc[a.status]||'#555'}"></div>
-    <div class="lmain"><div class="ltitle">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</div>
-    <div class="lmeta"><span class="tag" style="color:${sc[a.status]}">${a.status}</span><span class="tag">${a.size}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</span>${a.page?`<span class="tag">${esc(a.page)}</span>`:''} ${a.dateStart?`<span class="tag">${fmtDk(a.dateStart)}</span>`:''} ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''} ${a.tearsheet?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''} ${a.payType?`<span class="tag" style="color:#14B8A6">${esc(a.payType)}${a.payRef?' #'+esc(a.payRef):''}</span>`:''}</div></div>
-    <div class="lacts"><button class="xbtn" aria-label="Edit">&#9998;</button></div>
-  </div>`).join('');
+  el.innerHTML=ads.map(a=>`<div class="list-card" onclick="openAdDrawer('${a.id}')"><div class="lbar" style="background:${sc[a.status]||'#555'}"></div><div class="lmain"><div class="ltitle">${esc(a.client)}${a.desc?' \u2014 '+esc(a.desc):''}</div><div class="lmeta"><span class="tag" style="color:${sc[a.status]}">${a.status}</span><span class="tag">${a.size}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</span>${a.page?`<span class="tag">${esc(a.page)}</span>`:''} ${a.dateStart?`<span class="tag">${fmtDk(a.dateStart)}</span>`:''} ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''} ${a.tearsheet===true||a.tearsheet==='true'?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''} ${a.payType?`<span class="tag" style="color:#14B8A6">${esc(a.payType)}${a.payRef?' #'+esc(a.payRef):''}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
 }
 
 function renderSpFilters(){
@@ -511,7 +602,7 @@ function renderSpDrawer(){
     <div class="dhd"><span>&#127942; ${s?'Edit event':'New sport / school event'}</span><button class="xbtn" onclick="closeSportDrawer()">&times;</button></div>
     <div class="r3"><div class="fld"><label>Event / game</label><input id="sp-t" value="${esc(s?.title||'')}"></div><div class="fld"><label>Sport</label><select id="sp-sp">${SPORT_TYPES.map(t=>`<option${(s?.sport||'Other')===t?' selected':''}>${t}</option>`).join('')}</select></div><div class="fld"><label>Date &amp; time</label><input type="datetime-local" id="sp-dt" value="${s?.date||''}"></div></div>
     <div class="r3"><div class="fld"><label>Opponent</label><input id="sp-opp" value="${esc(s?.opponent||'')}"></div><div class="fld"><label>Location</label><input id="sp-loc" value="${esc(s?.location||'')}"></div><div class="fld"><label>Reporter</label><select id="sp-rep">${repOpts(s?.reporter||'')}</select></div></div>
-    <div class="r2"><div class="fld"><label>Notes</label><input id="sp-notes" value="${esc(s?.notes||'')}"></div><div class="fld"><label style="display:flex;align-items:center;gap:7px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="sp-cov" ${s?.covering?'checked':''} style="width:15px;height:15px;accent-color:#22C55E"> Covering this event</label></div></div>
+    <div class="r2"><div class="fld"><label>Notes</label><input id="sp-notes" value="${esc(s?.notes||'')}"></div><div class="fld"><label style="display:flex;align-items:center;gap:7px;padding-top:18px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer"><input type="checkbox" id="sp-cov" ${s?.covering===true||s?.covering==='true'?'checked':''} style="width:15px;height:15px;accent-color:#22C55E"> Covering this event</label></div></div>
     <div class="dfoot"><div>${s?`<button class="del" onclick="delSp('${s.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeSportDrawer()">Cancel</button><button class="btn btn-green" onclick="saveSp(${s?`'${s.id}'`:'null'})">Save</button></div></div>
   </div>`;
 }
@@ -528,12 +619,7 @@ function renderSports(){
   let sports=load('sports');if(fSport!=='All')sports=sports.filter(x=>x.sport===fSport);
   sports.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if(!sports.length){el.innerHTML='<div class="empty">No events yet.</div>';return;}
-  el.innerHTML=sports.map(s=>`<div class="sportcard ${s.covering?'cov':'nocov'}">
-    <div class="chkbox${s.covering?' on':''}" onclick="toggleCov('${s.id}')">${s.covering?'&#10003;':''}</div>
-    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</div>
-    <div class="lmeta" style="margin-top:3px"><span class="tag" style="${s.covering?'color:#22C55E;border-color:#22C55E44':'color:#555'}">${s.covering?'Covering':'Not covering'}</span><span class="tag">${esc(s.sport)}</span>${s.date?`<span class="tag">${new Date(s.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`:''} ${s.location?`<span class="tag">${esc(s.location)}</span>`:''} ${s.reporter?`<span class="tag">${esc(s.reporter)}</span>`:''}</div></div>
-    <button class="xbtn" onclick="openSportDrawer('${s.id}')">&#9998;</button>
-  </div>`).join('');
+  el.innerHTML=sports.map(s=>`<div class="sportcard ${s.covering===true||s.covering==='true'?'cov':'nocov'}"><div class="chkbox${s.covering===true||s.covering==='true'?' on':''}" onclick="toggleCov('${s.id}')">${s.covering===true||s.covering==='true'?'&#10003;':''}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</div><div class="lmeta" style="margin-top:3px"><span class="tag" style="${s.covering===true||s.covering==='true'?'color:#22C55E;border-color:#22C55E44':'color:#555'}">${s.covering===true||s.covering==='true'?'Covering':'Not covering'}</span><span class="tag">${esc(s.sport)}</span>${s.date?`<span class="tag">${new Date(s.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`:''} ${s.location?`<span class="tag">${esc(s.location)}</span>`:''} ${s.reporter?`<span class="tag">${esc(s.reporter)}</span>`:''}</div></div><button class="xbtn" onclick="openSportDrawer('${s.id}')">&#9998;</button></div>`).join('');
 }
 
 function openRepDrawer(id){repOpen=true;repId=id;renderRepDrawer()}
@@ -542,12 +628,7 @@ function renderRepDrawer(){
   const el=document.getElementById('rep-form-area');if(!el)return;
   if(!repOpen){el.innerHTML='';return;}
   const reps=load('reporters'),r=repId?reps.find(x=>x.id===repId):null;
-  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px">
-    <div class="dhd"><span>&#128101; ${r?'Edit reporter':'Add reporter'}</span><button class="xbtn" onclick="closeRepDrawer()">&times;</button></div>
-    <div class="r3"><div class="fld"><label>Name</label><input id="rp-n" value="${esc(r?.name||'')}"></div><div class="fld"><label>Beat</label><input id="rp-b" value="${esc(r?.beat||'')}"></div><div class="fld"><label>Phone</label><input id="rp-ph" value="${esc(r?.phone||'')}" placeholder="701-555-0000"></div></div>
-    <div class="r2"><div class="fld"><label>Email</label><input id="rp-c" value="${esc(r?.contact||'')}"></div><div class="fld"><label>Notes</label><input id="rp-notes" value="${esc(r?.notes||'')}"></div></div>
-    <div class="dfoot"><div>${r?`<button class="del" onclick="delRep('${r.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeRepDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveRep(${r?`'${r.id}'`:'null'})">Save</button></div></div>
-  </div>`;
+  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px"><div class="dhd"><span>&#128101; ${r?'Edit reporter':'Add reporter'}</span><button class="xbtn" onclick="closeRepDrawer()">&times;</button></div><div class="r3"><div class="fld"><label>Name</label><input id="rp-n" value="${esc(r?.name||'')}"></div><div class="fld"><label>Beat</label><input id="rp-b" value="${esc(r?.beat||'')}"></div><div class="fld"><label>Phone</label><input id="rp-ph" value="${esc(r?.phone||'')}" placeholder="701-555-0000"></div></div><div class="r2"><div class="fld"><label>Email</label><input id="rp-c" value="${esc(r?.contact||'')}"></div><div class="fld"><label>Notes</label><input id="rp-notes" value="${esc(r?.notes||'')}"></div></div><div class="dfoot"><div>${r?`<button class="del" onclick="delRep('${r.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeRepDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveRep(${r?`'${r.id}'`:'null'})">Save</button></div></div></div>`;
 }
 function saveRep(id){
   const name=document.getElementById('rp-n').value.trim();if(!name)return;
@@ -559,29 +640,17 @@ function delRep(id){if(!confirm('Delete?'))return;save('reporters',load('reporte
 function renderReporters(){
   const el=document.getElementById('replist');if(!el)return;
   const reps=load('reporters');
-  if(!reps.length){el.innerHTML='<div class="empty">No reporters yet.</div>';return;}
-  el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')">
-    <div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#3B82F6;flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
-    <div class="lmain"><div class="ltitle">${esc(r.name)}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div>
-    <div class="lacts"><button class="xbtn">&#9998;</button></div>
-  </div>`).join('');
+  if(!reps.length){el.innerHTML='<div class="empty">No reporters yet. Add your staff here so they appear in story dropdowns.</div>';return;}
+  el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')"><div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#3B82F6;flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><div class="lmain"><div class="ltitle">${esc(r.name)}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
 }
+
 function openPrintModal(){
   const reps=load('reporters');
-  document.getElementById('modal-root').innerHTML=`<div class="print-bg" onclick="if(event.target===this)closePM()">
-    <div class="print-box">
-      <h3>&#128438; Print assignment sheet</h3>
-      <div class="pr-opt"><input type="radio" name="prpt" id="pr-all" value="__all__" checked><label for="pr-all">Full sheet &mdash; all reporters</label></div>
-      ${reps.map(r=>`<div class="pr-opt"><input type="radio" name="prpt" id="pr-${r.id}" value="${esc(r.name)}"><label for="pr-${r.id}">&#128101; ${esc(r.name)} <span style="color:#555;font-size:11px">&mdash; ${esc(r.beat||'reporter')}</span></label></div>`).join('')}
-      <div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem"><button class="btn" onclick="closePM()">Cancel</button><button class="btn btn-green" onclick="doPrint()">&#128438; Print</button></div>
-    </div>
-  </div>`;
+  document.getElementById('modal-root').innerHTML=`<div class="print-bg" onclick="if(event.target===this)closePM()"><div class="print-box"><h3>&#128438; Print assignment sheet</h3><div class="pr-opt"><input type="radio" name="prpt" id="pr-all" value="__all__" checked><label for="pr-all">Full sheet &mdash; all reporters</label></div>${reps.map(r=>`<div class="pr-opt"><input type="radio" name="prpt" id="pr-${r.id}" value="${esc(r.name)}"><label for="pr-${r.id}">&#128101; ${esc(r.name)} <span style="color:#555;font-size:11px">&mdash; ${esc(r.beat||'reporter')}</span></label></div>`).join('')}<div style="display:flex;justify-content:flex-end;gap:7px;margin-top:1rem"><button class="btn" onclick="closePM()">Cancel</button><button class="btn btn-green" onclick="doPrint()">&#128438; Print</button></div></div></div>`;
 }
 function closePM(){document.getElementById('modal-root').innerHTML=''}
-
 function doPrint(){
-  const radio=document.querySelector('input[name=prpt]:checked');
-  const sel=radio?radio.value:'__all__';closePM();
+  const radio=document.querySelector('input[name=prpt]:checked'),sel=radio?radio.value:'__all__';closePM();
   const allStories=load('stories');
   const d0=daysList(wkOff),d1=daysList(wkOff+1);
   const s0=dk(d0[0]),e0=dk(d0[6]),s1=dk(d1[0]),e1=dk(d1[6]);
@@ -591,59 +660,22 @@ function doPrint(){
   const allSp=load('sports').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const allAds=load('ads').filter(x=>x.dateStart>=s0&&x.dateStart<=e1).sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
   const clItems=loadCL();
-  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()}`;
-  const lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`;
+  const lbl0=`${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()}`,lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`;
   const pageTitle=sel==='__all__'?'Full Assignment Sheet':`Assignment Sheet \u2014 ${sel}`;
-  const tr=s=>`<tr${s.urgent?' style="background:#fff0f0"':''}><td>${s.urgent?'\u26a0 ':''}${esc(s.headline||'(untitled)')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
+  const isU=s=>s.urgent===true||s.urgent==='true';
+  const tr=s=>`<tr${isU(s)?' style="background:#fff0f0"':''}><td>${isU(s)?'\u26a0 ':''}${esc(s.headline||'(untitled)')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
   const pw=window.open('','_blank');
   pw.document.write(`<!DOCTYPE html><html><head><title>${pageTitle} \u2014 The Standard</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:1.5rem;max-width:960px;margin:0 auto}h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:.4rem;margin-bottom:.2rem}h2{font-size:12px;margin:1rem 0 .4rem;border-bottom:1px solid #ccc;padding-bottom:.2rem;text-transform:uppercase;letter-spacing:.05em}table{width:100%;border-collapse:collapse;margin-bottom:.75rem;font-size:11px}th{text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:10px;text-transform:uppercase;background:#f5f5f5}td{padding:4px 6px;border-bottom:1px solid #eee;vertical-align:top}tr:nth-child(even) td{background:#fafafa}.sub{font-size:11px;color:#555;margin-bottom:.75rem}.dl{color:#8B4513;font-weight:bold}.none{color:#888;font-style:italic;font-size:11px}.cl-section{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.04em;color:#555;padding:6px 0 2px}.cl-row{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid #eee;font-size:11px}.cl-box{width:12px;height:12px;border:1px solid #999;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}@media print{@page{margin:1cm}body{padding:.25rem}}</style></head><body>
   <h1>The Standard</h1>
   <div class="sub">${pageTitle} &middot; ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} &middot; <span class="dl">Print deadline: Monday 2:00 PM</span></div>
   <h2>This week (${lbl0}) &mdash; publishes Wednesday</h2>${tw.length?`<table><thead><tr><th>Headline</th><th>Reporter</th><th>Section</th><th>Status</th><th>Page</th><th>Due</th><th>Words</th></tr></thead><tbody>${tw.map(tr).join('')}</tbody></table>`:'<p class="none">No stories.</p>'}
   <h2>Next week (${lbl1}) &mdash; publishes Wednesday</h2>${nw.length?`<table><thead><tr><th>Headline</th><th>Reporter</th><th>Section</th><th>Status</th><th>Page</th><th>Due</th><th>Words</th></tr></thead><tbody>${nw.map(tr).join('')}</tbody></table>`:'<p class="none">No stories.</p>'}
-  ${sel==='__all__'&&allSp.length?`<h2>School &amp; sports events</h2><table><thead><tr><th>Event</th><th>Sport</th><th>Date/time</th><th>Location</th><th>Reporter</th><th>Covering?</th></tr></thead><tbody>${allSp.map(s=>`<tr><td>${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</td><td>${esc(s.sport)}</td><td>${s.date?new Date(s.date).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</td><td>${esc(s.location||'\u2014')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${s.covering?'YES':'no'}</td></tr>`).join('')}</tbody></table>`:''}
-  ${sel==='__all__'&&allAds.length?`<h2>Advertising (this &amp; next week)</h2><table><thead><tr><th>Client</th><th>Size</th><th>Page</th><th>Run dates</th><th>Status</th><th>Rate</th><th>Tear sheet</th><th>Contact</th></tr></thead><tbody>${allAds.map(a=>`<tr><td>${esc(a.client)}</td><td>${esc(a.size)}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</td><td>${esc(a.page||'TBD')}</td><td>${fmtDk(a.dateStart)}${a.dateEnd&&a.dateEnd!==a.dateStart?' \u2192 '+fmtDk(a.dateEnd):''}</td><td>${esc(a.status)}${a.payType?' ('+esc(a.payType)+(a.payRef?' #'+esc(a.payRef):'')+')':''}</td><td>${esc(a.rate||'\u2014')}</td><td>${a.tearsheet?'Yes':''}</td><td>${esc(a.cname||'')}${a.phone?' '+esc(a.phone):''}${a.email?' '+esc(a.email):''}</td></tr>`).join('')}</tbody></table>`:''}
+  ${sel==='__all__'&&allSp.length?`<h2>School &amp; sports events</h2><table><thead><tr><th>Event</th><th>Sport</th><th>Date/time</th><th>Location</th><th>Reporter</th><th>Covering?</th></tr></thead><tbody>${allSp.map(s=>`<tr><td>${esc(s.title)}${s.opponent?' vs '+esc(s.opponent):''}</td><td>${esc(s.sport)}</td><td>${s.date?new Date(s.date).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</td><td>${esc(s.location||'\u2014')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${s.covering===true||s.covering==='true'?'YES':'no'}</td></tr>`).join('')}</tbody></table>`:''}
+  ${sel==='__all__'&&allAds.length?`<h2>Advertising (this &amp; next week)</h2><table><thead><tr><th>Client</th><th>Size</th><th>Page</th><th>Run dates</th><th>Status</th><th>Rate</th><th>Tear sheet</th><th>Contact</th></tr></thead><tbody>${allAds.map(a=>`<tr><td>${esc(a.client)}</td><td>${esc(a.size)}${a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:''}</td><td>${esc(a.page||'TBD')}</td><td>${fmtDk(a.dateStart)}${a.dateEnd&&a.dateEnd!==a.dateStart?' \u2192 '+fmtDk(a.dateEnd):''}</td><td>${esc(a.status)}${a.payType?' ('+esc(a.payType)+(a.payRef?' #'+esc(a.payRef):'')+')':''}</td><td>${esc(a.rate||'\u2014')}</td><td>${a.tearsheet===true||a.tearsheet==='true'?'Yes':''}</td><td>${esc(a.cname||'')}${a.phone?' '+esc(a.phone):''}${a.email?' '+esc(a.email):''}</td></tr>`).join('')}</tbody></table>`:''}
   ${sel==='__all__'?`<h2>Production checklist</h2>${Object.entries(clItems.reduce((acc,t)=>{(acc[t.section]=acc[t.section]||[]).push(t);return acc},{})).map(([sec,items])=>`<div class="cl-section">${esc(sec)}</div>${items.map(t=>`<div class="cl-row"><div class="cl-box">${t.done?'&#10003;':''}</div><span${t.done?' style="text-decoration:line-through;color:#999"':''}>${esc(t.text)}</span></div>`).join('')}`).join('')}`:''}
   </body></html>`);
   pw.document.close();setTimeout(()=>pw.print(),350);
 }
-
-function seedData(){
-  if(load('reporters').length>0)return;
-  const reps=[{id:uid(),name:'Sarah Mitchell',beat:'City Hall / Politics',phone:'701-555-0101',contact:'smitchell@thestandard.com',notes:''},{id:uid(),name:'Tom Becker',beat:'Sports',phone:'701-555-0102',contact:'tbecker@thestandard.com',notes:''},{id:uid(),name:'Linda Okafor',beat:'Schools / Education',phone:'701-555-0103',contact:'lokafor@thestandard.com',notes:''},{id:uid(),name:'Dale Vance',beat:'Business / Agriculture',phone:'701-555-0104',contact:'dvance@thestandard.com',notes:''}];
-  save('reporters',reps);
-  const now=new Date(),sun=new Date(now);sun.setDate(now.getDate()-now.getDay());sun.setHours(0,0,0,0);
-  const wd=n=>{const d=new Date(sun);d.setDate(sun.getDate()+n);return dk(d)};
-  const stories=[
-    {id:uid(),headline:'City council approves $2.4M road project on Main St',subhead:'Work to begin spring',reporter:'Sarah Mitchell',section:'News',status:'Writing',due:wd(3),page:'Front page',wordcount:'600',sources:'Mayor Johnson, City Engineer Dave Park',notes:'Get quote from business owners',photoAssign:'Staff',photoStatus:'Needed',layout:'Above fold',priority:'High',urgent:false},
-    {id:uid(),headline:'School board to vote on new curriculum standards',subhead:'',reporter:'Linda Okafor',section:'News',status:'Reporting',due:wd(1),page:'Page 2',wordcount:'500',sources:'Supt. Helen Cross',notes:'Attend Tuesday meeting, file Monday noon',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'High',urgent:true},
-    {id:uid(),headline:'Hawks basketball eyes state tournament berth',subhead:'Season record 14-3',reporter:'Tom Becker',section:'Sports',status:'Writing',due:wd(3),page:'Sports page',wordcount:'500',sources:'Coach Dan Sutter',notes:'Get action photo from Friday game',photoAssign:'Tom Becker',photoStatus:'Received',layout:'',priority:'Normal',urgent:false},
-    {id:uid(),headline:'Grain elevator expansion brings 12 new jobs',subhead:'',reporter:'Dale Vance',section:'Business',status:'Editing',due:wd(3),page:'Page 3',wordcount:'400',sources:'Owner Rick Halverson',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false},
-    {id:uid(),headline:'Local artist mural unveiled at community center',subhead:'',reporter:'Sarah Mitchell',section:'Arts & Culture',status:'Filed',due:wd(3),page:'Inside',wordcount:'350',sources:'Artist Donna Reese',notes:'',photoAssign:'Staff',photoStatus:'Done',layout:'',priority:'Normal',urgent:false},
-    {id:uid(),headline:'County commissioners to expand recycling program',subhead:'',reporter:'Dale Vance',section:'News',status:'Idea',due:wd(10),page:'TBD',wordcount:'',sources:'Commissioner Lisa Berg',notes:'Follow up after Thursday meeting',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false},
-    {id:uid(),headline:'Spring sports preview: what to watch this season',subhead:'',reporter:'Tom Becker',section:'Sports',status:'Assigned',due:wd(10),page:'Sports page',wordcount:'700',sources:'All head coaches',notes:'Need individual coach quotes',photoAssign:'',photoStatus:'Needed',layout:'',priority:'Normal',urgent:false},
-    {id:uid(),headline:'New pharmacy opens downtown',subhead:'',reporter:'Linda Okafor',section:'Business',status:'Reporting',due:wd(10),page:'Page 2',wordcount:'400',sources:'Owner Jan Friese',notes:'',photoAssign:'',photoStatus:'Needed',layout:'',priority:'Normal',urgent:false},
-  ];
-  save('stories',stories);
-  const events=[{id:uid(),title:'City council meeting',date:wd(1),note:'7:00 PM \u2014 City Hall'},{id:uid(),title:'School board meeting',date:wd(2),note:'6:30 PM \u2014 District office'},{id:uid(),title:'County commissioners',date:wd(4),note:'9:00 AM \u2014 Courthouse'}];
-  save('events',events);
-  const ads=[
-    {id:uid(),client:'Farmers State Bank',desc:'Spring loan rates',size:'Quarter page',status:'Confirmed',page:'Page 2',dateStart:wd(3),dateEnd:wd(3),rate:'$180',cols:'',len:'',payType:'',payRef:'',cname:'Amy Hofer',phone:'701-555-0142',email:'amy@farmersbank.com',addr:'100 Main St, Westhope ND',notes:'',tearsheet:true},
-    {id:uid(),client:'Main Street Hardware',desc:'Spring sale',size:'Half page',status:'Paid',page:'Back page',dateStart:wd(3),dateEnd:wd(10),rate:'$290/wk',cols:'',len:'',payType:'Check',payRef:'4421',cname:'Greg Plum',phone:'701-555-0155',email:'greg@mshardware.com',addr:'205 Main St, Westhope ND',notes:'Running 4 weeks',tearsheet:false},
-    {id:uid(),client:'Anderson Auto Body',desc:'',size:'Column inch',status:'Pending',page:'Inside',dateStart:wd(10),dateEnd:wd(10),rate:'$12/ci',cols:'2',len:'5',payType:'',payRef:'',cname:'Bob Anderson',phone:'701-555-0188',email:'bob@andersonauto.com',addr:'312 Hwy 83, Westhope ND',notes:'',tearsheet:false},
-    {id:uid(),client:'Westhope Floral',desc:"Mother's Day special",size:'Eighth page',status:'Invoiced',page:'Front page',dateStart:wd(10),dateEnd:wd(10),rate:'$95',cols:'',len:'',payType:'',payRef:'',cname:'Sue Hanson',phone:'701-555-0166',email:'sue@westhopefloral.com',addr:'118 2nd St, Westhope ND',notes:'',tearsheet:true},
-  ];
-  save('ads',ads);
-  const sp=[
-    {id:uid(),title:'Hawks vs. Minot High',sport:'Basketball',date:new Date(sun.getTime()+86400000*6).toISOString().slice(0,16),opponent:'Minot High',location:'Hawks Gymnasium',reporter:'Tom Becker',notes:'Regional playoff',covering:true},
-    {id:uid(),title:'Hawks Track Home Invitational',sport:'Track',date:new Date(sun.getTime()+86400000*9).toISOString().slice(0,16),opponent:'',location:'Westhope Track',reporter:'Tom Becker',notes:'8 teams',covering:true},
-    {id:uid(),title:'JV Baseball vs. Kenmare',sport:'Baseball',date:new Date(sun.getTime()+86400000*9).toISOString().slice(0,16),opponent:'Kenmare',location:'Westhope Field',reporter:'',notes:'',covering:false},
-    {id:uid(),title:'Girls Soccer Scrimmage',sport:'Soccer',date:new Date(sun.getTime()+86400000*5).toISOString().slice(0,16),opponent:'Burlington',location:'West Field',reporter:'',notes:'Pre-season',covering:false},
-  ];
-  save('sports',sp);
-}
-
-setInterval(updateDeadline,60000);
 </script>
 </body>
 </html>
