@@ -129,6 +129,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cl-text.done{text-decoration:line-through;color:#555}
 .cl-section-title{font-size:11px;color:#666;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;margin-top:4px}
 .email-preview{background:#1e1e1e;border:1px solid #333;border-radius:6px;padding:1rem;font-size:12px;font-family:monospace;color:#ccc;white-space:pre-wrap;max-height:300px;overflow-y:auto;margin:.75rem 0}
+.adplace-row{background:#242424;border:1px solid #2e2e2e;border-radius:7px;padding:.625rem .875rem;margin-bottom:5px;display:flex;align-items:center;gap:10px;transition:all .12s}
+.adplace-row.placed{border-left:3px solid #22C55E;background:#0e2018}
+.adplace-row.unplaced{border-left:3px solid #444}
+.adplace-chk{width:18px;height:18px;border-radius:4px;border:1px solid #555;background:#1e1e1e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all .12s}
+.adplace-chk.on{background:#22C55E;border-color:#22C55E;color:#1a1a1a}
+.adplace-pg{padding:4px 8px;border:1px solid #3a3a3a;border-radius:5px;font-size:12px;background:#1e1e1e;color:#e8e8e8;font-family:inherit;cursor:pointer;min-width:130px}
+.adplace-pg:focus{outline:none;border-color:#3B82F6}
 </style>
 </head>
 <body>
@@ -155,6 +162,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tabs">
   <div class="tab on" id="tab-stories" onclick="switchTab('stories')">&#128197; 2-Week View</div>
   <div class="tab" id="tab-checklist" onclick="switchTab('checklist')">&#9989; Checklist</div>
+  <div class="tab" id="tab-adplace" onclick="switchTab('adplace')">&#128462; Ad placement</div>
   <div class="tab" id="tab-ads" onclick="switchTab('ads')">&#128176; Advertising</div>
   <div class="tab" id="tab-sports" onclick="switchTab('sports')">&#127942; School / Sports</div>
   <div class="tab" id="tab-reporters" onclick="switchTab('reporters')">&#128101; Reporters</div>
@@ -177,6 +185,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tc" id="tc-checklist">
   <div class="section-hd">Weekly production checklist</div>
   <div id="checklist-area"></div>
+</div>
+<div class="tc" id="tc-adplace">
+  <div class="section-hd" style="margin-bottom:.5rem">Ad placement — <span id="adplace-week-label"></span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm" onclick="shiftAdPlaceWeek(-1)">&#8592;</button>
+      <button class="btn btn-sm" onclick="shiftAdPlaceWeek(1)">&#8594;</button>
+      <button class="btn btn-sm" onclick="shiftAdPlaceWeek(0)">This week</button>
+      <button class="btn btn-green btn-sm" onclick="printAdPlacement()">&#128438; Print</button>
+    </div>
+  </div>
+  <div id="adplace-list"></div>
 </div>
 <div class="tc" id="tc-ads">
   <div class="section-hd">Advertising schedule<div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="openSalesReport()">&#128200; Sales report</button><button class="btn btn-amber btn-sm" onclick="openAdDrawer(null)">+ Add ad</button></div></div>
@@ -297,6 +316,7 @@ function render(){
   updateDeadline();
   if(activeTab==='stories'){renderStats();renderTwoWeeks();renderStoryList();}
   if(activeTab==='checklist'){renderChecklist();}
+  if(activeTab==='adplace'){renderAdPlacement();}
   if(activeTab==='ads'){renderAdFilters();renderAds();renderAdDrawer();}
   if(activeTab==='sports'){renderSpFilters();renderSports();renderSpDrawer();}
   if(activeTab==='reporters'){renderReporters();renderRepDrawer();}
@@ -880,6 +900,122 @@ function doPrint(){
   ${sel==='__all__'?`<h2>Production checklist</h2>${Object.entries(clItems.reduce((acc,t)=>{(acc[t.section]=acc[t.section]||[]).push(t);return acc},{})).map(([sec,items])=>`<div class="cl-section">${esc(sec)}</div>${items.map(t=>`<div class="cl-row"><div class="cl-box">${t.done?'&#10003;':''}</div><span${t.done?' style="text-decoration:line-through;color:#999"':''}>${esc(t.text)}</span></div>`).join('')}`).join('')}`:''}
   </body></html>`);
   pw.document.close();setTimeout(()=>pw.print(),350);
+}
+
+// ---- AD PLACEMENT ----
+let adPlaceWkOff=0;
+
+function shiftAdPlaceWeek(n){
+  adPlaceWkOff=n===0?0:adPlaceWkOff+n;
+  renderAdPlacement();
+}
+
+function apKey(adId,wkOff){return'ap_'+adId+'_'+wkOff}
+
+function getPlacement(adId){
+  try{return JSON.parse(localStorage.getItem(apKey(adId,adPlaceWkOff))||'null');}catch(e){return null;}
+}
+function savePlacement(adId,data){
+  localStorage.setItem(apKey(adId,adPlaceWkOff),JSON.stringify(data));
+}
+
+function toggleAdPlaced(adId){
+  const cur=getPlacement(adId)||{placed:false,page:''};
+  cur.placed=!cur.placed;
+  savePlacement(adId,cur);
+  renderAdPlacement();
+}
+
+function setAdPlacePage(adId,page){
+  const cur=getPlacement(adId)||{placed:false,page:''};
+  cur.page=page;
+  savePlacement(adId,cur);
+  // Update the ad's page field too
+  const ads=load('ads'),a=ads.find(x=>x.id===adId);
+  if(a&&page){a.page=page;save('ads',ads);}
+  renderAdPlacement();
+}
+
+function renderAdPlacement(){
+  const el=document.getElementById('adplace-list');if(!el)return;
+  const lbl=document.getElementById('adplace-week-label');
+
+  const d=daysList(adPlaceWkOff);
+  const wkStart=dk(d[0]),wkEnd=dk(d[6]);
+  const pubDate=d[3]; // Wednesday
+  if(lbl)lbl.textContent=`${MONTHS[d[0].getMonth()].slice(0,3)} ${d[0].getDate()}\u2013${d[6].getDate()} \u00b7 publishes Wed ${pubDate.getDate()}`;
+
+  // Get all ads that run during this week
+  const ads=load('ads').filter(a=>{
+    const s=a.dateStart||'',e=a.dateEnd||a.dateStart||'';
+    return s<=wkEnd&&(e>=wkStart||s>=wkStart);
+  }).sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
+
+  if(!ads.length){
+    el.innerHTML=`<div class="empty">No ads scheduled for this week.<br><span style="font-size:12px">Add ads in the Advertising tab with run dates that include this week.</span></div>`;
+    return;
+  }
+
+  const placed=ads.filter(a=>getPlacement(a.id)?.placed);
+  const unplaced=ads.filter(a=>!getPlacement(a.id)?.placed);
+  const pct=ads.length?Math.round(placed.length/ads.length*100):0;
+
+  const sc={'Confirmed':'#22C55E','Pending':'#FBBF24','Invoiced':'#3B82F6','Paid':'#14B8A6','Cancelled':'#555'};
+
+  const row=a=>{
+    const p=getPlacement(a.id)||{placed:false,page:a.page||''};
+    const isPlaced=!!p.placed;
+    const pgOpts=PAGES.map(pg=>`<option value="${esc(pg)}"${(p.page||a.page||'TBD')===pg?' selected':''}>${pg}</option>`).join('');
+    const sizeStr=a.size+(a.size==='Column inch'&&a.cols?` (${a.cols}col\u00d7${a.len||'?'}\u2033)`:'');
+    return`<div class="adplace-row ${isPlaced?'placed':'unplaced'}">
+      <div class="adplace-chk${isPlaced?' on':''}" onclick="toggleAdPlaced('${a.id}')">${isPlaced?'&#10003;':''}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:${isPlaced?'#97C459':'#f0f0f0'};margin-bottom:3px${isPlaced?';text-decoration:none':''}">
+          ${esc(a.client)}${a.desc?' \u2014 <span style="font-weight:400;color:#888">'+esc(a.desc)+'</span>':''}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+          <span class="tag" style="color:${sc[a.status]||'#777'}">${a.status}</span>
+          <span class="tag">${esc(sizeStr)}</span>
+          ${a.salesperson?`<span class="tag" style="color:#FBBF24">&#128100; ${esc(a.salesperson)}</span>`:''}
+          ${a.rate?`<span class="tag" style="color:#22C55E">${esc(a.rate)}</span>`:''}
+          ${a.tearsheet===true||a.tearsheet==='true'?`<span class="tag" style="color:#FBBF24">&#9993; Tear sheet</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <label style="font-size:11px;color:#666;white-space:nowrap">Page:</label>
+        <select class="adplace-pg" onchange="setAdPlacePage('${a.id}',this.value)">${pgOpts}</select>
+        ${isPlaced?`<span style="font-size:12px;color:#22C55E;font-weight:500">&#9989; Placed</span>`:`<span style="font-size:12px;color:#555">Not placed</span>`}
+      </div>
+    </div>`;
+  };
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem;background:#2a2a2a;border-radius:7px;padding:.5rem .875rem">
+      <div style="flex:1">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">${placed.length} of ${ads.length} ads placed &nbsp;&middot;&nbsp; ${unplaced.length} remaining</div>
+        <div style="height:6px;background:#333;border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#22C55E;border-radius:3px;transition:width .3s"></div></div>
+      </div>
+      <div style="font-size:18px;font-weight:500;color:${pct===100?'#22C55E':'#888'}">${pct}%</div>
+    </div>
+    ${unplaced.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:5px;padding-left:4px">To be placed (${unplaced.length})</div>${unplaced.map(row).join('')}`:''}
+    ${placed.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#555;margin:${unplaced.length?'12px':0} 0 5px;padding-left:4px">Placed (${placed.length})</div>${placed.map(row).join('')}`:''}`;
+}
+
+function printAdPlacement(){
+  const d=daysList(adPlaceWkOff);
+  const wkStart=dk(d[0]),wkEnd=dk(d[6]);
+  const ads=load('ads').filter(a=>{
+    const s=a.dateStart||'',e=a.dateEnd||a.dateStart||'';
+    return s<=wkEnd&&(e>=wkStart||s>=wkStart);
+  }).sort((a,b)=>(a.dateStart||'').localeCompare(b.dateStart||''));
+  const pw=window.open('','_blank');
+  pw.document.write(`<!DOCTYPE html><html><head><title>Ad Placement \u2014 The Standard</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:1.5rem;max-width:800px;margin:0 auto}h1{font-size:18px;border-bottom:2px solid #000;padding-bottom:.3rem;margin-bottom:.25rem}h2{font-size:11px;margin:.875rem 0 .3rem;text-transform:uppercase;letter-spacing:.05em;color:#555;border-bottom:1px solid #eee;padding-bottom:.2rem}table{width:100%;border-collapse:collapse;font-size:11px}th{text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:10px;text-transform:uppercase;background:#f5f5f5}td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:middle}.chk{width:12px;height:12px;border:1px solid #999;border-radius:2px;display:inline-block}.sub{font-size:11px;color:#555;margin-bottom:.75rem}@media print{@page{margin:1cm}body{padding:0}}</style></head><body>
+  <h1>The Standard \u2014 Ad Placement Sheet</h1>
+  <div class="sub">Week of ${MONTHS[d[0].getMonth()].slice(0,3)} ${d[0].getDate()}\u2013${d[6].getDate()} &nbsp;&middot;&nbsp; Publishes Wednesday ${d[3].getDate()} &nbsp;&middot;&nbsp; ${ads.length} ads total</div>
+  <table><thead><tr><th style="width:20px">&#9744;</th><th>Client</th><th>Size</th><th>Page</th><th>Rate</th><th>Status</th><th>Salesperson</th><th>Tear sheet</th></tr></thead><tbody>
+  ${ads.map(a=>{const p=getPlacement(a.id)||{placed:false,page:a.page||''};const sizeStr=a.size+(a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:'');return`<tr${p.placed?' style="background:#f0fff4"':''}><td><div class="chk" style="${p.placed?'background:#22c55e;border-color:#22c55e;':''}">${p.placed?'\u2713':''}</div></td><td><strong>${esc(a.client)}</strong>${a.desc?' \u2014 '+esc(a.desc):''}</td><td>${esc(sizeStr)}</td><td>${esc(p.page||a.page||'TBD')}</td><td>${esc(a.rate||'\u2014')}</td><td>${esc(a.status)}</td><td>${esc(a.salesperson||'\u2014')}</td><td>${a.tearsheet===true||a.tearsheet==='true'?'Yes':''}</td></tr>`;}).join('')}
+  </tbody></table></body></html>`);
+  pw.document.close();setTimeout(()=>pw.print(),300);
 }
 
 function initApp(){render();setInterval(updateDeadline,60000)}
