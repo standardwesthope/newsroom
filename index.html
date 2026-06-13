@@ -191,7 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="display:flex;gap:6px">
       <button class="btn btn-sm" onclick="shiftAdPlaceWeek(-1)">&#8592;</button>
       <button class="btn btn-sm" onclick="shiftAdPlaceWeek(1)">&#8594;</button>
-      <button class="btn btn-sm" onclick="shiftAdPlaceWeek(0)">This week</button>
+      <button class="btn btn-sm" onclick="shiftAdPlaceWeek(0)">Current issue</button>
       <button class="btn btn-green btn-sm" onclick="printAdPlacement()">&#128438; Print</button>
     </div>
   </div>
@@ -240,7 +240,7 @@ const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const SECTIONS=['News','Sports','Opinion','Feature','Business','Arts & Culture','Obituaries','Community','Letters','Other'];
 const STATUSES=['Idea','Assigned','Reporting','Writing','Editing','Photo needed','Ready to layout','Filed','Done'];
-const PAGES=['Front page','Page 2','Page 3','Inside','Sports page','Opinion page','Business page','Back page','TBD'];
+const PAGES=['Page 1','Page 2','Page 3','Page 4','Page 5','Page 6','Page 7','Page 8','Page 9','Page 10','Page 11','Page 12','Page 13','Page 14','Page 15','Page 16','TBD'];
 const AD_SIZES=['Full page','Half page','Quarter page','Eighth page','Banner','Column inch','Insert','Classified','Digital'];
 const AD_STATUS=['Confirmed','Pending','Invoiced','Paid','Cancelled'];
 const SPORT_TYPES=['Football','Basketball','Volleyball','Baseball','Softball','Track','Cross Country','Wrestling','Swimming','Golf','Tennis','Soccer','Hockey','Other'];
@@ -903,10 +903,18 @@ function doPrint(){
 }
 
 // ---- AD PLACEMENT ----
-let adPlaceWkOff=0;
+// Default to the week currently being worked on:
+// If today is past Monday 2pm, we're working on NEXT week's paper.
+function getDefaultAdPlaceOffset(){
+  const now=new Date(),dow=now.getDay(),hrs=now.getHours();
+  // Mon=1. If past Mon 2pm (dow>1, or dow===1 && hrs>=14), next paper is next week
+  if(dow>1||(dow===1&&hrs>=14)) return 1;
+  return 0;
+}
+let adPlaceWkOff=getDefaultAdPlaceOffset();
 
 function shiftAdPlaceWeek(n){
-  adPlaceWkOff=n===0?0:adPlaceWkOff+n;
+  adPlaceWkOff=n===0?getDefaultAdPlaceOffset():adPlaceWkOff+n;
   renderAdPlacement();
 }
 
