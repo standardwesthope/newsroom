@@ -7,6 +7,71 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a1a;color:#e8e8e8;font-size:16px}
+
+body.light{background:#f4f5f7;color:#1a1a1a}
+body.light #pw-screen{background:#f4f5f7}
+body.light .pw-box{background:#fff;border-color:#ddd}
+body.light .pw-box h2{color:#1a1a1a}
+body.light .pw-box p{color:#888}
+body.light .pw-box input{background:#f9f9f9;border-color:#ddd;color:#1a1a1a}
+body.light .mast{border-color:#ddd}
+body.light .logo{color:#1a1a1a}
+body.light .deadline-pill{background:#FEF3C7;border-color:#F59E0B;color:#92400E}
+body.light .tab{background:#fff;border-color:#ddd;color:#555}
+body.light .tab:hover{background:#f0f0f0;color:#1a1a1a}
+body.light .tab.on{background:#185FA5;color:#fff;border-color:#185FA5}
+body.light .wk-label{background:#e5e7eb;color:#6B7280}
+body.light .day-col{background:#fff}
+body.light .day-hd{border-color:#e5e7eb;background:#f9f9f9}
+body.light .day-hd.today{background:#185FA5}
+body.light .day-hd.deadline{background:#FEF3C7}
+body.light .day-hd.deadline .day-num,.day-hd.deadline .day-name,.day-hd.deadline .day-lbl{color:#92400E}
+body.light .day-hd.pubday{background:#D1FAE5}
+body.light .day-hd.pubday .day-num,.day-hd.pubday .day-name,.day-hd.pubday .day-lbl{color:#065F46}
+body.light .day-name{color:#9CA3AF}
+body.light .day-num{color:#1a1a1a}
+body.light .ev-block:hover{filter:brightness(.95)}
+body.light .add-btn{border-color:#ddd;color:#ccc}
+body.light .add-btn:hover{background:#f3f4f6;color:#555}
+body.light .stat{background:#fff;border-color:#e5e7eb}
+body.light .list-card{background:#fff;border-color:#e5e7eb}
+body.light .list-card:hover{border-color:#aaa}
+body.light .ltitle{color:#1a1a1a}
+body.light .tag{background:#f3f4f6;border-color:#e5e7eb;color:#555}
+body.light .btn{background:#fff;border-color:#ddd;color:#333}
+body.light .btn:hover{background:#f3f4f6}
+body.light .btn-blue{background:#185FA5;color:#fff;border-color:#185FA5}
+body.light .btn-amber{background:#854F0B;color:#FAC775;border-color:#854F0B}
+body.light .btn-green{background:#27500A;color:#C0DD97;border-color:#27500A}
+body.light .btn-icon{background:#fff;border-color:#ddd;color:#333}
+body.light .btn-icon:hover{background:#f3f4f6}
+body.light .drawer{background:#fff;border-color:#ddd}
+body.light .dhd{color:#1a1a1a}
+body.light .fld input,body.light .fld select,body.light .fld textarea{background:#fff;border-color:#ddd;color:#1a1a1a}
+body.light .fld label{color:#555}
+body.light .fld select option{background:#fff;color:#1a1a1a}
+body.light .dfoot{border-color:#e5e7eb}
+body.light .checklist-panel{background:#fff;border-color:#e5e7eb}
+body.light .cl-item{border-color:#f3f4f6}
+body.light .cl-chk{background:#fff;border-color:#ddd}
+body.light .sportcard{background:#fff;border-color:#e5e7eb}
+body.light .adplace-row{background:#fff;border-color:#e5e7eb}
+body.light .adplace-pg{background:#fff;border-color:#ddd;color:#1a1a1a}
+body.light .modal-bg{background:rgba(0,0,0,.5)}
+body.light .modal-box{background:#fff;border-color:#ddd}
+body.light .modal-box h3{color:#1a1a1a}
+body.light .pr-opt{border-color:#e5e7eb}
+body.light .pr-opt label{color:#1a1a1a}
+body.light .section-hd{color:#1a1a1a}
+body.light .filters .chip{background:#fff;border-color:#ddd;color:#555}
+body.light .filters .chip.on{background:#185FA5;color:#fff;border-color:#185FA5}
+body.light .empty{color:#9CA3AF}
+body.light .xbtn{color:#aaa}
+body.light .xbtn:hover{color:#333}
+body.light .wk-str{color:#333}
+body.light .sub{color:#888}
+.theme-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;border:1px solid #444;background:transparent;cursor:pointer;font-size:12px;color:#e8e8e8;font-family:inherit;transition:all .12s}
+body.light .theme-btn{border-color:#ddd;color:#555;background:#fff}
 #pw-screen{position:fixed;inset:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:999}
 .pw-box{background:#242424;border:1px solid #444;border-radius:12px;padding:2rem;width:min(360px,90vw);text-align:center}
 .pw-box h2{font-size:20px;font-weight:500;color:#fff;margin-bottom:.5rem}
@@ -155,9 +220,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub">Publishes Wednesday &nbsp;&middot;&nbsp; Print deadline Monday 2:00 PM</div>
   </div>
   <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
+  <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
   <button class="btn btn-blue btn-sm" onclick="openEmailModal()">&#9993; Email reporters</button>
   <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
-  <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Reporters</button>
+  <button class="btn btn-sm" onclick="printMonthCalendar()">&#128197; Month view</button>
+  <button class="btn btn-amber btn-sm" onclick="switchTab('reporters')">&#128101; Staff</button>
 </div>
 <div class="tabs">
   <div class="tab on" id="tab-stories" onclick="switchTab('stories')">&#128197; 2-Week View</div>
@@ -165,7 +232,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="tab" id="tab-adplace" onclick="switchTab('adplace')">&#128462; Ad placement</div>
   <div class="tab" id="tab-ads" onclick="switchTab('ads')">&#128176; Advertising</div>
   <div class="tab" id="tab-sports" onclick="switchTab('sports')">&#127942; School / Sports</div>
-  <div class="tab" id="tab-reporters" onclick="switchTab('reporters')">&#128101; Reporters</div>
+  <div class="tab" id="tab-reporters" onclick="switchTab('reporters')">&#128101; Staff</div>
 </div>
 <div class="tc on" id="tc-stories">
   <div class="stats-row" id="stats"></div>
@@ -210,7 +277,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="sportlist"></div>
 </div>
 <div class="tc" id="tc-reporters">
-  <div class="section-hd">Reporter roster<button class="btn btn-sm" onclick="openRepDrawer(null)">+ Add reporter</button></div>
+  <div class="section-hd">Staff roster<button class="btn btn-sm" onclick="openRepDrawer(null)">+ Add staff member</button></div>
   <div id="rep-form-area"></div>
   <div id="replist"></div>
 </div>
@@ -218,12 +285,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 const CORRECT_PW='coffeeshop';
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light');
+  localStorage.setItem('ts_theme', isLight?'light':'dark');
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.textContent=isLight?'🌙 Dark':'☀️ Light';
+}
+function applyTheme(){
+  const theme=localStorage.getItem('ts_theme')||'dark';
+  if(theme==='light'){
+    document.body.classList.add('light');
+    const btn=document.getElementById('theme-btn');
+    if(btn)btn.textContent='🌙 Dark';
+  }
+}
+
 function checkPW(){
   const v=document.getElementById('pw-input').value;
   if(v===CORRECT_PW){sessionStorage.setItem('ts_auth',CORRECT_PW);document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
   else{document.getElementById('pw-err').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
 window.addEventListener('DOMContentLoaded',()=>{
+  applyTheme();
   if(sessionStorage.getItem('ts_auth')===CORRECT_PW){document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
   else document.getElementById('pw-input').focus();
 });
@@ -249,18 +332,17 @@ const SBGCOLOR={'Idea':'#202224','Assigned':'#1a2540','Reporting':'#2a2000','Wri
 const URGENT='#DC2626',URGENTBG='#2a0a0a';
 
 const DEFAULT_TASKS=[
-  {id:'t1',day:1,text:'Upload pages to printer',section:'Monday \u2014 Deadline Day'},
-  {id:'t2',day:1,text:'Confirm final ad placements',section:'Monday \u2014 Deadline Day'},
-  {id:'t3',day:1,text:'Send PDF proof to editor',section:'Monday \u2014 Deadline Day'},
-  {id:'t4',day:1,text:'Submit by 2:00 PM deadline',section:'Monday \u2014 Deadline Day'},
-  {id:'t5',day:3,text:'Upload to website',section:'Wednesday \u2014 Publish Day'},
-  {id:'t6',day:3,text:'Post to social media',section:'Wednesday \u2014 Publish Day'},
-  {id:'t7',day:3,text:'Email digital edition to subscribers',section:'Wednesday \u2014 Publish Day'},
-  {id:'t8',day:3,text:'Email tear sheets to advertisers',section:'Wednesday \u2014 Publish Day'},
-  {id:'t9',day:3,text:'File print copies for archive',section:'Wednesday \u2014 Publish Day'},
-  {id:'t10',day:4,text:'Review next week story list',section:'Thursday \u2014 Planning'},
-  {id:'t11',day:4,text:'Contact advertisers for upcoming issue',section:'Thursday \u2014 Planning'},
-  {id:'t12',day:4,text:'Assign reporters for next week',section:'Thursday \u2014 Planning'},
+  {id:'t1',day:1,text:'Confirm final ad placements',section:'Monday \u2014 Deadline Day'},
+  {id:'t2',day:1,text:'Send PDF proof to editor',section:'Monday \u2014 Deadline Day'},
+  {id:'t3',day:1,text:'Submit by 2:00 PM deadline',section:'Monday \u2014 Deadline Day'},
+  {id:'t4',day:3,text:'Upload to website',section:'Wednesday \u2014 Publish Day'},
+  {id:'t5',day:3,text:'Post to social media',section:'Wednesday \u2014 Publish Day'},
+  {id:'t6',day:3,text:'Email tear sheets to advertisers',section:'Wednesday \u2014 Publish Day'},
+  {id:'t7',day:3,text:'File print copies for archive',section:'Wednesday \u2014 Publish Day'},
+  {id:'t8',day:2,text:'Review next week story list',section:'Tuesday \u2014 Planning'},
+  {id:'t9',day:2,text:'Contact advertisers for upcoming issue',section:'Tuesday \u2014 Planning'},
+  {id:'t10',day:2,text:'Assign reporters for next week',section:'Tuesday \u2014 Planning'},
+  {id:'t11',day:2,text:'Check sports schedule for coverage',section:'Tuesday \u2014 Planning'},
 ];
 
 let wkOff=0,activeTab='stories',openStoryId=null,fAdSt='All',fSport='All',storyListFilter='All';
@@ -380,7 +462,7 @@ function renderWeekGrid(weekOff){
         return`<div class="ev-block" style="background:${bg};border-left-color:${bc};${ol}" onclick="openStoryInline('${s.id}')">
           ${isU?`<span class="uflag">!</span>`:''}
           <div class="ev-title" style="color:#f0f0f0;padding-right:${isU?'14px':'0'}">${esc(s.headline||'(untitled)')}</div>
-          <div class="ev-meta" style="color:${SCOLOR[s.status]||'#888'}">${s.reporter?esc(s.reporter)+' \u00b7 ':''}${s.status}</div>
+          <div class="ev-meta" style="color:${SCOLOR[s.status]||'#888'}">${s.reporter?esc(s.reporter)+' \u00b7 ':''}${s.status}${s.origDue&&s.origDue!==s.due?` \u00b7 <span style="color:#EF9F27">moved</span>`:''}</div>
         </div>`;
       })
     ];
@@ -441,11 +523,12 @@ function renderStoryList(){
           <span class="tag">${esc(s.section)}</span>
           ${s.reporter?`<span class="tag">&#128101; ${esc(s.reporter)}</span>`:''}
           ${s.page&&s.page!=='TBD'?`<span class="tag">&#128216; ${esc(s.page)}</span>`:''}
-          <span class="tag">&#128197; ${fmtDk(s.due)}</span>
+          <span class="tag" style="font-weight:700;color:#e8e8e8;border-color:#555">&#128197; ${fmtDk(s.due)}</span>
           ${s.wordcount?`<span class="tag">&#128203; ${s.wordcount} words</span>`:''}
           ${s.photoStatus&&s.photoStatus!=='Not needed'&&s.photoStatus!=='Done'?`<span class="tag" style="color:#D4537E">&#128247; ${s.photoStatus}</span>`:''}
+          ${s.placed===true||s.placed==='true'?`<span class="tag" style="color:#22C55E;border-color:#22C55E44;font-weight:500">&#9989; Placed p.${s.placedPage||'?'}</span>`:''}
           ${s.priority&&s.priority!=='Normal'?`<span class="tag" style="color:#EF4444">&#9650; ${s.priority}</span>`:''}
-        </div>
+          ${s.origDue&&s.origDue!==s.due?`<span class="tag" style="color:#EF9F27;border-color:#EF9F2744">&#8635; Moved from ${fmtDk(s.origDue)}${s.holdReason?' \u2014 '+esc(s.holdReason):''}</span>`:''}
         ${s.notes?`<div style="font-size:12px;color:#666;margin-top:5px;font-style:italic">${esc(s.notes)}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;justify-content:center;flex-shrink:0">
@@ -472,7 +555,24 @@ function renderStoryList(){
     ${wkSection(`Next week \u2014 ${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`,nextWk)}`;
 }
 
-function quickAdd(date){const stories=load('stories'),id=uid();stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,page:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50)}
+function checkDateMoved(id){
+  const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;
+  const newDue=document.getElementById('sf-due-'+id)?.value;
+  const origDue=s.origDue||s.due;
+  const reasonEl=document.getElementById('sf-holdreason-'+id);
+  if(reasonEl){
+    if(newDue&&newDue!==origDue){
+      reasonEl.style.borderColor='#EF9F27';
+      reasonEl.style.opacity='1';
+      reasonEl.placeholder='Why was this moved? (e.g. source unavailable, bumped for breaking news…)';
+      reasonEl.focus();
+    } else {
+      reasonEl.style.borderColor='';
+      reasonEl.style.opacity='.4';
+    }
+  }
+}
+function quickAdd(date){const stories=load('stories'),id=uid();stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,origDue:date,holdReason:'',page:'TBD',placed:false,placedPage:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50)}
 function addNewStory(){const d=daysList(wkOff),defDue=dk(d[3]);quickAdd(defDue)}
 function openStoryInline(id){openStoryId=openStoryId===id?null:id;renderStoryForm();renderStoryList();}
 
@@ -489,15 +589,31 @@ function renderStoryForm(){
     <div class="dhd"><span style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${topC};flex-shrink:0"></span>${s.headline?esc(s.headline):'New story'}${isU?`<span style="font-size:11px;background:${URGENTBG};color:${URGENT};border:1px solid ${URGENT}44;border-radius:20px;padding:1px 8px;font-weight:600">URGENT</span>`:''}</span><button class="xbtn" onclick="openStoryInline(null)">&times;</button></div>
     <div class="r2"><div class="fld"><label>Headline</label><input id="sf-hl-${s.id}" value="${esc(s.headline||'')}"></div><div class="fld"><label>Subheadline / deck</label><input id="sf-sub-${s.id}" value="${esc(s.subhead||'')}"></div></div>
     <div class="r4"><div class="fld"><label>Reporter</label><select id="sf-rep-${s.id}">${repOpts(s.reporter||'')}</select></div><div class="fld"><label>Section</label><select id="sf-sec-${s.id}">${secO}</select></div><div class="fld"><label>Status</label><select id="sf-st-${s.id}">${stO}</select></div><div class="fld"><label>Priority</label><select id="sf-pri-${s.id}">${['Normal','High','Breaking','Hold'].map(p=>`<option${(s.priority||'Normal')===p?' selected':''}>${p}</option>`).join('')}</select></div></div>
-    <div class="r4"><div class="fld"><label>Publish date</label><input type="date" id="sf-due-${s.id}" value="${s.due||''}"></div><div class="fld"><label>Target page</label><select id="sf-pg-${s.id}">${pgO}</select></div><div class="fld"><label>Word count</label><input type="number" id="sf-wc-${s.id}" value="${s.wordcount||''}" placeholder="500"></div><div class="fld"><label>Layout notes</label><input id="sf-layout-${s.id}" value="${esc(s.layout||'')}" placeholder="Above fold&hellip;"></div></div>
+    <div class="r4"><div class="fld"><label>Current publish date</label><input type="date" id="sf-due-${s.id}" value="${s.due||''}" onchange="checkDateMoved('${s.id}')"></div><div class="fld"><label>Original publish date</label><input type="date" id="sf-origdue-${s.id}" value="${s.origDue||s.due||''}" style="color:#aaa" title="Edit if entered incorrectly"></div><div class="fld"><label>Target page</label><select id="sf-pg-${s.id}">${pgO}</select></div><div class="fld"><label>Word count</label><input type="number" id="sf-wc-${s.id}" value="${s.wordcount||''}" placeholder="500"></div></div>
+    <div class="fld"><label>Hold / move reason <span style="font-size:10px;color:#555">(if date changed)</span></label><input id="sf-holdreason-${s.id}" value="${esc(s.holdReason||'')}" placeholder="e.g. Source unavailable, bumped for breaking news…" ${!s.origDue||s.origDue===s.due?'style="opacity:.4"':'style="border-color:#EF9F27"'}></div>
     <div class="r2"><div class="fld"><label>Sources / contacts</label><textarea id="sf-src-${s.id}" style="min-height:44px">${esc(s.sources||'')}</textarea></div><div class="fld"><label>Notes / angle</label><textarea id="sf-notes-${s.id}" style="min-height:44px">${esc(s.notes||'')}</textarea></div></div>
     <div class="r3"><div class="fld"><label>Photo assigned to</label><input id="sf-photo-${s.id}" value="${esc(s.photoAssign||'')}" placeholder="Photographer&hellip;"></div><div class="fld"><label>Photo status</label><select id="sf-photost-${s.id}">${['Not needed','Needed','Assigned','Received','Done'].map(p=>`<option${(s.photoStatus||'Not needed')===p?' selected':''}>${p}</option>`).join('')}</select></div><div class="fld"><label style="display:flex;align-items:center;gap:7px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer;padding-top:18px"><input type="checkbox" ${isU?'checked':''} id="sf-urg-${s.id}" style="width:15px;height:15px;cursor:pointer;accent-color:${URGENT}"> <span style="color:${URGENT};font-weight:500">&#9888; Mark as urgent</span></label></div></div>
+    <div style="border-top:1px solid #333;padding-top:.625rem;margin-top:.25rem">
+      <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:.4rem">Placement</div>
+      <div class="r3">
+        <div class="fld"><label style="display:flex;align-items:center;gap:7px;text-transform:none;font-size:13px;letter-spacing:0;cursor:pointer;padding-top:16px"><input type="checkbox" id="sf-placed-${s.id}" ${s.placed===true||s.placed==='true'?'checked':''} style="width:15px;height:15px;cursor:pointer;accent-color:#22C55E"> <span style="color:#22C55E;font-weight:500">&#9989; Story placed</span></label></div>
+        <div class="fld"><label>Placed on page</label><select id="sf-placepg-${s.id}">${PAGES.map(p=>`<option${(s.placedPage||'TBD')===p?' selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="fld"><label>Layout notes</label><input id="sf-layout-${s.id}" value="${esc(s.layout||'')}" placeholder="Above fold&hellip;"></div>
+      </div>
+    </div>
     <div class="dfoot"><button class="del" onclick="delStory('${s.id}')">&#128465; Delete</button><div class="dbtns"><button class="btn" onclick="openStoryInline(null)">Cancel</button><button class="btn btn-blue" onclick="saveStory('${s.id}')">Save</button></div></div>
   </div>`;
 }
 function saveStory(id){
   const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;
-  s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';s.reporter=document.getElementById('sf-rep-'+id)?.value||'';s.section=document.getElementById('sf-sec-'+id)?.value||s.section;s.status=document.getElementById('sf-st-'+id)?.value||s.status;s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';s.due=document.getElementById('sf-due-'+id)?.value||s.due;s.page=document.getElementById('sf-pg-'+id)?.value||s.page;s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';s.layout=document.getElementById('sf-layout-'+id)?.value||'';s.sources=document.getElementById('sf-src-'+id)?.value||'';s.notes=document.getElementById('sf-notes-'+id)?.value||'';s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;
+  s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';s.reporter=document.getElementById('sf-rep-'+id)?.value||'';s.section=document.getElementById('sf-sec-'+id)?.value||s.section;s.status=document.getElementById('sf-st-'+id)?.value||s.status;s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';
+  const newDue=document.getElementById('sf-due-'+id)?.value||s.due;
+  const formOrigDue=document.getElementById('sf-origdue-'+id)?.value;
+  if(!s.origDue) s.origDue=s.due; // Set original date first time
+  if(formOrigDue) s.origDue=formOrigDue; // Use whatever is in the field (editable)
+  s.due=newDue;
+  s.holdReason=document.getElementById('sf-holdreason-'+id)?.value.trim()||'';
+  s.page=document.getElementById('sf-pg-'+id)?.value||s.page;s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';s.layout=document.getElementById('sf-layout-'+id)?.value||'';s.sources=document.getElementById('sf-src-'+id)?.value||'';s.notes=document.getElementById('sf-notes-'+id)?.value||'';s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;s.placed=document.getElementById('sf-placed-'+id)?.checked||false;s.placedPage=document.getElementById('sf-placepg-'+id)?.value||'';
   save('stories',stories);openStoryId=null;render();
 }
 function advStatus(id){const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;s.status=STATUSES[(STATUSES.indexOf(s.status)+1)%STATUSES.length];save('stories',stories);render()}
@@ -750,11 +866,12 @@ function renderRepDrawer(){
   const el=document.getElementById('rep-form-area');if(!el)return;
   if(!repOpen){el.innerHTML='';return;}
   const reps=load('reporters'),r=repId?reps.find(x=>x.id===repId):null;
-  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px"><div class="dhd"><span>&#128101; ${r?'Edit reporter':'Add reporter'}</span><button class="xbtn" onclick="closeRepDrawer()">&times;</button></div><div class="r3"><div class="fld"><label>Name</label><input id="rp-n" value="${esc(r?.name||'')}"></div><div class="fld"><label>Beat</label><input id="rp-b" value="${esc(r?.beat||'')}"></div><div class="fld"><label>Phone</label><input id="rp-ph" value="${esc(r?.phone||'')}" placeholder="701-555-0000"></div></div><div class="r2"><div class="fld"><label>Email</label><input id="rp-c" value="${esc(r?.contact||'')}"></div><div class="fld"><label>Notes</label><input id="rp-notes" value="${esc(r?.notes||'')}"></div></div><div class="dfoot"><div>${r?`<button class="del" onclick="delRep('${r.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeRepDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveRep(${r?`'${r.id}'`:'null'})">Save</button></div></div></div>`;
+  const roleOpts=['Reporter','Photographer','Editor','Advertising','Sports Reporter','Freelancer','Other'].map(ro=>`<option${(r?.role||'Reporter')===ro?' selected':''}>${ro}</option>`).join('');
+  el.innerHTML=`<div class="drawer" style="margin-bottom:.875rem;border-radius:8px"><div class="dhd"><span>&#128101; ${r?'Edit staff member':'Add staff member'}</span><button class="xbtn" onclick="closeRepDrawer()">&times;</button></div><div class="r4"><div class="fld"><label>Name</label><input id="rp-n" value="${esc(r?.name||'')}"></div><div class="fld"><label>Role</label><select id="rp-role">${roleOpts}</select></div><div class="fld"><label>Beat / specialty</label><input id="rp-b" value="${esc(r?.beat||'')}"></div><div class="fld"><label>Phone</label><input id="rp-ph" value="${esc(r?.phone||'')}" placeholder="701-555-0000"></div></div><div class="r2"><div class="fld"><label>Email</label><input id="rp-c" value="${esc(r?.contact||'')}"></div><div class="fld"><label>Notes</label><input id="rp-notes" value="${esc(r?.notes||'')}"></div></div><div class="dfoot"><div>${r?`<button class="del" onclick="delRep('${r.id}')">&#128465; Delete</button>`:''}</div><div class="dbtns"><button class="btn" onclick="closeRepDrawer()">Cancel</button><button class="btn btn-blue" onclick="saveRep(${r?`'${r.id}'`:'null'})">Save</button></div></div></div>`;
 }
 function saveRep(id){
   const name=document.getElementById('rp-n').value.trim();if(!name)return;
-  const reps=load('reporters'),obj={name,beat:document.getElementById('rp-b').value.trim(),phone:document.getElementById('rp-ph').value.trim(),contact:document.getElementById('rp-c').value.trim(),notes:document.getElementById('rp-notes').value.trim()};
+  const reps=load('reporters'),obj={name,role:document.getElementById('rp-role').value,beat:document.getElementById('rp-b').value.trim(),phone:document.getElementById('rp-ph').value.trim(),contact:document.getElementById('rp-c').value.trim(),notes:document.getElementById('rp-notes').value.trim()};
   if(id){const r=reps.find(x=>x.id===id);if(r)Object.assign(r,obj);}else reps.push({id:uid(),...obj});
   save('reporters',reps);closeRepDrawer();
 }
@@ -763,7 +880,7 @@ function renderReporters(){
   const el=document.getElementById('replist');if(!el)return;
   const reps=load('reporters');
   if(!reps.length){el.innerHTML='<div class="empty">No reporters yet. Add your staff here so they appear in story dropdowns.</div>';return;}
-  el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')"><div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#3B82F6;flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><div class="lmain"><div class="ltitle">${esc(r.name)}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
+  const roleColors={'Reporter':'#3B82F6','Photographer':'#8B5CF6','Editor':'#EF4444','Advertising':'#FBBF24','Sports Reporter':'#22C55E','Freelancer':'#14B8A6','Other':'#888'};el.innerHTML=reps.map(r=>`<div class="list-card" onclick="openRepDrawer('${r.id}')"><div style="width:32px;height:32px;border-radius:50%;background:#1a2540;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${roleColors[r.role]||'#3B82F6'};flex-shrink:0">${r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><div class="lmain"><div class="ltitle">${esc(r.name)} ${r.role?`<span class="tag" style="color:${roleColors[r.role]||'#888'};border-color:${roleColors[r.role]||'#888'}44;margin-left:4px">${esc(r.role)}</span>`:''}</div><div class="lmeta">${r.beat?`<span class="tag">${esc(r.beat)}</span>`:''} ${r.phone?`<span class="tag">&#128222; ${esc(r.phone)}</span>`:''} ${r.contact?`<span class="tag">&#9993; ${esc(r.contact)}</span>`:''}</div></div><div class="lacts"><button class="xbtn">&#9998;</button></div></div>`).join('');
 }
 
 // ---- EMAIL REPORTERS ----
@@ -781,7 +898,7 @@ function openEmailModal(){
       <h3>&#9993; Email assignment to reporter</h3>
       <div class="fld"><label>Select reporter</label>
         <select id="email-rep" onchange="previewEmail()" style="width:100%;padding:8px 10px;border:1px solid #3a3a3a;border-radius:6px;font-size:13px;background:#1e1e1e;color:#e8e8e8;font-family:inherit">
-          <option value="">— choose reporter —</option>
+          <option value="">— choose staff member —</option>
           ${reps.map(r=>`<option value="${esc(r.name)}">${esc(r.name)} &lt;${esc(r.contact)}&gt;</option>`).join('')}
         </select>
       </div>
@@ -888,7 +1005,7 @@ function doPrint(){
   const lbl1=`${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}-${d1[6].getDate()}`;
   const pageTitle=sel==='__all__'?'Full Assignment Sheet':'Assignment Sheet \u2014 '+sel;
   const isU=s=>s.urgent===true||s.urgent==='true';
-  const tr=s=>`<tr${isU(s)?' style="background:#fff0f0"':''}><td>${isU(s)?'\u26a0 ':''}${esc(s.headline||'(untitled)')}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
+  const tr=s=>`<tr${isU(s)?' style="background:#fff0f0"':''}><td>${isU(s)?'\u26a0 ':''}${esc(s.headline||'(untitled)')}${s.origDue&&s.origDue!==s.due?` <span style="color:#b45309;font-size:10px">(moved from ${fmtDk(s.origDue)}${s.holdReason?' \u2014 '+esc(s.holdReason):''})</span>`:''}</td><td>${esc(s.reporter||'\u2014')}</td><td>${esc(s.section)}</td><td>${esc(s.status)}</td><td>${esc(s.page||'TBD')}</td><td>${fmtDk(s.due)}</td><td>${esc(s.wordcount||'\u2014')}</td></tr>`;
   const pw=window.open('','_blank');
   pw.document.write(`<!DOCTYPE html><html><head><title>${pageTitle} \u2014 The Standard</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:1.5rem;max-width:960px;margin:0 auto}h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:.4rem;margin-bottom:.2rem}h2{font-size:12px;margin:1rem 0 .4rem;border-bottom:1px solid #ccc;padding-bottom:.2rem;text-transform:uppercase;letter-spacing:.05em}table{width:100%;border-collapse:collapse;margin-bottom:.75rem;font-size:11px}th{text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:10px;text-transform:uppercase;background:#f5f5f5}td{padding:4px 6px;border-bottom:1px solid #eee;vertical-align:top}tr:nth-child(even) td{background:#fafafa}.sub{font-size:10px;color:#555;margin-bottom:.75rem}.dl{color:#8B4513;font-weight:bold}.none{color:#888;font-style:italic;font-size:11px}.cl-section{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.04em;color:#555;padding:6px 0 2px}.cl-row{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid #eee;font-size:11px}.cl-box{width:12px;height:12px;border:1px solid #999;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}@media print{@page{margin:1cm}body{padding:.25rem}}</style></head><body>
   <h1>The Standard</h1>
@@ -1024,6 +1141,121 @@ function printAdPlacement(){
   ${ads.map(a=>{const p=getPlacement(a.id)||{placed:false,page:a.page||''};const sizeStr=a.size+(a.size==='Column inch'&&a.cols?` ${a.cols}col\u00d7${a.len||'?'}\u2033`:'');return`<tr${p.placed?' style="background:#f0fff4"':''}><td><div class="chk" style="${p.placed?'background:#22c55e;border-color:#22c55e;':''}">${p.placed?'\u2713':''}</div></td><td><strong>${esc(a.client)}</strong>${a.desc?' \u2014 '+esc(a.desc):''}</td><td>${esc(sizeStr)}</td><td>${esc(p.page||a.page||'TBD')}</td><td>${esc(a.rate||'\u2014')}</td><td>${esc(a.status)}</td><td>${esc(a.salesperson||'\u2014')}</td><td>${a.tearsheet===true||a.tearsheet==='true'?'Yes':''}</td></tr>`;}).join('')}
   </tbody></table></body></html>`);
   pw.document.close();setTimeout(()=>pw.print(),300);
+}
+
+function printMonthCalendar(){
+  // Show a picker for which month to print
+  const now=new Date();
+  const monthInput=prompt(
+    'Print calendar for which month?\nEnter as YYYY-MM (e.g. '+
+    now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+')',
+    now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')
+  );
+  if(!monthInput||!monthInput.match(/^\d{4}-\d{2}$/))return;
+  const [yr,mo]=monthInput.split('-').map(Number);
+  if(!yr||!mo||mo<1||mo>12)return;
+
+  const events=load('events');
+  const stories=load('stories');
+
+  // Build all days in the month
+  const firstDay=new Date(yr,mo-1,1);
+  const lastDay=new Date(yr,mo,0);
+  const monthName=MONTHS[mo-1]+' '+yr;
+
+  // Build day grid — pad start with blanks
+  const startDow=firstDay.getDay(); // 0=Sun
+  const totalDays=lastDay.getDate();
+
+  // For each day collect events and stories
+  const dayData={};
+  for(let d=1;d<=totalDays;d++){
+    const key=`${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvs=events.filter(e=>{
+      const s=e.date,end=e.dateEnd||e.date;
+      return key>=s&&key<=end;
+    });
+    const daySt=stories.filter(s=>s.due===key);
+    dayData[d]={key,evs:dayEvs,stories:daySt,dow:new Date(yr,mo-1,d).getDay()};
+  }
+
+  // Generate HTML
+  const cells=[];
+  // Blank cells before first day
+  for(let i=0;i<startDow;i++) cells.push('<td class="blank"></td>');
+
+  for(let d=1;d<=totalDays;d++){
+    const {evs,stories,dow,key}=dayData[d];
+    const isDeadline=dow===1;
+    const isPub=dow===3;
+    const today=dk(new Date());
+    const isToday=key===today;
+    let cls='day';
+    if(isToday) cls+=' today';
+    else if(isDeadline) cls+=' deadline';
+    else if(isPub) cls+=' pubday';
+
+    let inner=`<div class="dnum">${d}</div>`;
+    if(isDeadline) inner+=`<div class="dlbl">DEADLINE</div>`;
+    if(isPub) inner+=`<div class="dlbl pub">PUBLISH</div>`;
+    evs.forEach(e=>{
+      const timeStr=e.time||'';
+      inner+=`<div class="cal-ev ev-item">${timeStr?timeStr+' ':''}${e.title}</div>`;
+    });
+    stories.forEach(s=>{
+      inner+=`<div class="cal-ev st-item">${s.headline||'(untitled)'}</div>`;
+    });
+    cells.push(`<td class="${cls}">${inner}</td>`);
+    // New row after Saturday
+    if(dow===6&&d<totalDays) cells.push('</tr><tr>');
+  }
+  // Pad end
+  const endDow=lastDay.getDay();
+  if(endDow<6) for(let i=endDow+1;i<=6;i++) cells.push('<td class="blank"></td>');
+
+  const pw=window.open('','_blank');
+  pw.document.write(`<!DOCTYPE html><html><head><title>${monthName} \u2014 The Standard</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;font-size:11px;color:#000;padding:1rem}
+    h1{font-size:18px;margin-bottom:.25rem}
+    .sub{font-size:11px;color:#555;margin-bottom:.75rem}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th{background:#f0f0f0;border:1px solid #ccc;padding:4px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+    td{border:1px solid #ccc;vertical-align:top;padding:4px;height:90px;width:14.28%}
+    td.blank{background:#fafafa}
+    td.today{background:#e8f0fe}
+    td.deadline{background:#fff8e8}
+    td.pubday{background:#f0fff4}
+    .dnum{font-size:14px;font-weight:700;margin-bottom:3px}
+    td.deadline .dnum{color:#854F0B}
+    td.pubday .dnum{color:#166534}
+    td.today .dnum{color:#1a56db}
+    .dlbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+    td.deadline .dlbl{color:#854F0B}
+    td.pubday .dlbl.pub{color:#166534}
+    .cal-ev{font-size:9px;padding:1px 3px;border-radius:2px;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ev-item{background:#FEF3C7;color:#78350F;border-left:2px solid #F59E0B}
+    .st-item{background:#DBEAFE;color:#1E40AF;border-left:2px solid #3B82F6}
+    .legend{display:flex;gap:12px;margin-top:.5rem;font-size:10px;align-items:center}
+    .leg{display:flex;align-items:center;gap:4px}
+    .leg-box{width:10px;height:10px;border-radius:2px}
+    @media print{@page{margin:.5cm;size:landscape}body{padding:0}}
+  </style></head><body>
+  <h1>The Standard \u2014 ${monthName}</h1>
+  <div class="sub">Publishes every Wednesday \u00b7 Print deadline Monday 2:00 PM \u00b7 Printed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+  <table>
+    <thead><tr>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr></thead>
+    <tbody><tr>${cells.join('')}</tr></tbody>
+  </table>
+  <div class="legend">
+    <span class="leg"><span class="leg-box" style="background:#FEF3C7;border-left:2px solid #F59E0B"></span>Event</span>
+    <span class="leg"><span class="leg-box" style="background:#DBEAFE;border-left:2px solid #3B82F6"></span>Story due</span>
+    <span class="leg"><span class="leg-box" style="background:#fff8e8;border:1px solid #ccc"></span>Deadline Monday</span>
+    <span class="leg"><span class="leg-box" style="background:#f0fff4;border:1px solid #ccc"></span>Publish Wednesday</span>
+  </div>
+  </body></html>`);
+  pw.document.close();
+  setTimeout(()=>pw.print(),350);
 }
 
 function initApp(){render();setInterval(updateDeadline,60000)}
