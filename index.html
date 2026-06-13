@@ -172,6 +172,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="story-form-area"></div>
   <div id="ev-form-area"></div>
   <div class="cal-wrap"><div class="two-weeks" id="two-weeks"></div></div>
+  <div id="story-list-area" style="margin-top:1.25rem"></div>
 </div>
 <div class="tc" id="tc-checklist">
   <div class="section-hd">Weekly production checklist</div>
@@ -243,7 +244,7 @@ const DEFAULT_TASKS=[
   {id:'t12',day:4,text:'Assign reporters for next week',section:'Thursday \u2014 Planning'},
 ];
 
-let wkOff=0,activeTab='stories',openStoryId=null,fAdSt='All',fSport='All';
+let wkOff=0,activeTab='stories',openStoryId=null,fAdSt='All',fSport='All',storyListFilter='All';
 let evOpen=false,evId=null,adOpen=false,adId=null,spOpen=false,spId=null,repOpen=false,repId=null;
 
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -294,7 +295,7 @@ function updateDeadline(){
 
 function render(){
   updateDeadline();
-  if(activeTab==='stories'){renderStats();renderTwoWeeks();}
+  if(activeTab==='stories'){renderStats();renderTwoWeeks();renderStoryList();}
   if(activeTab==='checklist'){renderChecklist();}
   if(activeTab==='ads'){renderAdFilters();renderAds();renderAdDrawer();}
   if(activeTab==='sports'){renderSpFilters();renderSports();renderSpDrawer();}
@@ -310,7 +311,30 @@ function renderStats(){
   const d0=daysList(wkOff),d1=daysList(wkOff+1),s=dk(d0[0]),e=dk(d1[6]);
   const st=load('stories').filter(x=>x.due>=s&&x.due<=e);
   const tot=st.length,pend=st.filter(x=>['Idea','Assigned'].includes(x.status)).length,prog=st.filter(x=>['Reporting','Writing','Editing','Photo needed','Ready to layout'].includes(x.status)).length,done=st.filter(x=>['Filed','Done'].includes(x.status)).length;
-  el.innerHTML=`<div class="stat total"><div class="stat-n">${tot}</div><div class="stat-l">Total (2 wks)</div></div><div class="stat pend"><div class="stat-n">${pend}</div><div class="stat-l">Pending</div></div><div class="stat prog"><div class="stat-n">${prog}</div><div class="stat-l">In progress</div></div><div class="stat done"><div class="stat-n">${done}</div><div class="stat-l">Filed/done</div></div>`;
+  const active=storyListFilter;
+  const cardStyle='cursor:pointer;transition:transform .1s,box-shadow .1s;';
+  const activeStyle='box-shadow:0 0 0 2px #fff;transform:scale(1.03);';
+  el.innerHTML=`
+    <div class="stat total" style="${cardStyle}${active==='All'?activeStyle:''}" onclick="setStoryFilter('All')" title="Show all stories">
+      <div class="stat-n">${tot}</div><div class="stat-l">Total (2 wks)</div>
+    </div>
+    <div class="stat pend" style="${cardStyle}${active==='Pending'?activeStyle:''}" onclick="setStoryFilter('Pending')" title="Show pending stories">
+      <div class="stat-n">${pend}</div><div class="stat-l">Pending &#9660;</div>
+    </div>
+    <div class="stat prog" style="${cardStyle}${active==='In progress'?activeStyle:''}" onclick="setStoryFilter('In progress')" title="Show in-progress stories">
+      <div class="stat-n">${prog}</div><div class="stat-l">In progress &#9660;</div>
+    </div>
+    <div class="stat done" style="${cardStyle}${active==='Filed/done'?activeStyle:''}" onclick="setStoryFilter('Filed/done')" title="Show filed/done stories">
+      <div class="stat-n">${done}</div><div class="stat-l">Filed/done &#9660;</div>
+    </div>`;
+}
+
+function setStoryFilter(f){
+  storyListFilter=storyListFilter===f&&f!=='All'?'All':f;
+  renderStats();
+  renderStoryList();
+  const el=document.getElementById('story-list-area');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function renderWeekGrid(weekOff){
@@ -352,9 +376,85 @@ function renderTwoWeeks(){
   el.innerHTML=`<div class="week-block"><div class="wk-label">${lbl0}</div><div class="cal-grid">${renderWeekGrid(wkOff)}</div></div><div class="week-block" style="margin-top:6px"><div class="wk-label">${lbl1}</div><div class="cal-grid">${renderWeekGrid(wkOff+1)}</div></div>`;
 }
 
+function renderStoryList(){
+  const el=document.getElementById('story-list-area');if(!el)return;
+  const d0=daysList(wkOff),d1=daysList(wkOff+1);
+  const s=dk(d0[0]),e=dk(d1[6]);
+  let stories=load('stories').filter(x=>x.due>=s&&x.due<=e);
+
+  // Apply filter
+  if(storyListFilter==='Pending') stories=stories.filter(x=>['Idea','Assigned'].includes(x.status));
+  else if(storyListFilter==='In progress') stories=stories.filter(x=>['Reporting','Writing','Editing','Photo needed','Ready to layout'].includes(x.status));
+  else if(storyListFilter==='Filed/done') stories=stories.filter(x=>['Filed','Done'].includes(x.status));
+
+  stories.sort((a,b)=>a.due.localeCompare(b.due)||(STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status)));
+
+  const filterLabel=storyListFilter==='All'?'All stories':storyListFilter;
+  const filterColor=storyListFilter==='Pending'?'#FBBF24':storyListFilter==='In progress'?'#F97316':storyListFilter==='Filed/done'?'#22C55E':'#3B82F6';
+
+  if(!stories.length){
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <span style="font-size:16px;font-weight:500;color:#fff">Stories \u2014 <span style="color:${filterColor}">${filterLabel}</span></span>
+      ${storyListFilter!=='All'?`<button class="btn btn-sm" onclick="setStoryFilter('All')">Clear filter</button>`:''}
+    </div>
+    <div class="empty" style="padding:2rem 0">No stories match this filter for the current 2-week view.</div>`;
+    return;
+  }
+
+  // Group by week
+  const thisWkEnd=dk(d0[6]);
+  const thisWk=stories.filter(x=>x.due<=thisWkEnd);
+  const nextWk=stories.filter(x=>x.due>thisWkEnd);
+
+  const storyRow=s=>{
+    const isU=s.urgent===true||s.urgent==='true';
+    const bc=isU?'#DC2626':(SCOLOR[s.status]||'#555');
+    const bg=isU?'#2a0a0a':(SBGCOLOR[s.status]||'#242424');
+    return`<div style="background:${bg};border:1px solid #2e2e2e;border-left:4px solid ${bc};border-radius:8px;padding:.875rem 1rem;margin-bottom:6px;display:flex;align-items:stretch;gap:12px;cursor:pointer" onclick="openStoryInline('${s.id}')">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+          ${isU?`<span style="font-size:11px;background:#3a0a0a;color:#DC2626;border:1px solid #DC262644;border-radius:20px;padding:1px 8px;font-weight:600">URGENT</span>`:''}
+          <span style="font-size:15px;font-weight:500;color:#f0f0f0">${esc(s.headline||'(untitled)')}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+          <span style="font-size:12px;padding:2px 8px;border-radius:20px;font-weight:500;background:${SBGCOLOR[s.status]||'#2a2a2a'};color:${SCOLOR[s.status]||'#888'}">${s.status}</span>
+          <span class="tag">${esc(s.section)}</span>
+          ${s.reporter?`<span class="tag">&#128101; ${esc(s.reporter)}</span>`:''}
+          ${s.page&&s.page!=='TBD'?`<span class="tag">&#128216; ${esc(s.page)}</span>`:''}
+          <span class="tag">&#128197; ${fmtDk(s.due)}</span>
+          ${s.wordcount?`<span class="tag">&#128203; ${s.wordcount} words</span>`:''}
+          ${s.photoStatus&&s.photoStatus!=='Not needed'&&s.photoStatus!=='Done'?`<span class="tag" style="color:#D4537E">&#128247; ${s.photoStatus}</span>`:''}
+          ${s.priority&&s.priority!=='Normal'?`<span class="tag" style="color:#EF4444">&#9650; ${s.priority}</span>`:''}
+        </div>
+        ${s.notes?`<div style="font-size:12px;color:#666;margin-top:5px;font-style:italic">${esc(s.notes)}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;justify-content:center;flex-shrink:0">
+        <button class="xbtn" onclick="event.stopPropagation();advStatus('${s.id}')" title="Advance status" style="font-size:18px;color:${SCOLOR[s.status]||'#555'}">&#9654;</button>
+        <button class="xbtn" onclick="event.stopPropagation();delStory('${s.id}')" style="font-size:16px">&#128465;</button>
+      </div>
+    </div>`;
+  };
+
+  const wkSection=(label,items)=>items.length?`
+    <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#666;padding:4px 8px;background:#2a2a2a;border-radius:5px;margin-bottom:6px">${label}</div>
+    ${items.map(storyRow).join('')}`:''
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
+      <span style="font-size:16px;font-weight:500;color:#fff">Stories \u2014 <span style="color:${filterColor}">${filterLabel}</span> <span style="font-size:13px;color:#555;font-weight:400">(${stories.length})</span></span>
+      <div style="display:flex;gap:6px">
+        ${storyListFilter!=='All'?`<button class="btn btn-sm" onclick="setStoryFilter('All')">&#10005; Clear filter</button>`:''}
+        <button class="btn btn-blue btn-sm" onclick="addNewStory()">+ Add story</button>
+      </div>
+    </div>
+    ${wkSection(`This week \u2014 ${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()}`,thisWk)}
+    ${nextWk.length&&thisWk.length?`<div style="height:8px"></div>`:''}
+    ${wkSection(`Next week \u2014 ${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()}`,nextWk)}`;
+}
+
 function quickAdd(date){const stories=load('stories'),id=uid();stories.push({id,headline:'',subhead:'',reporter:'',section:'News',status:'Idea',due:date,page:'TBD',wordcount:'',sources:'',notes:'',photoAssign:'',photoStatus:'Not needed',layout:'',priority:'Normal',urgent:false});save('stories',stories);openStoryId=id;renderTwoWeeks();renderStoryForm();setTimeout(()=>{const e=document.getElementById('sf-hl-'+id);if(e){e.focus();e.scrollIntoView({behavior:'smooth',block:'center'})}},50)}
 function addNewStory(){const d=daysList(wkOff),defDue=dk(d[3]);quickAdd(defDue)}
-function openStoryInline(id){openStoryId=openStoryId===id?null:id;renderStoryForm()}
+function openStoryInline(id){openStoryId=openStoryId===id?null:id;renderStoryForm();renderStoryList();}
 
 function renderStoryForm(){
   const el=document.getElementById('story-form-area');if(!el)return;
@@ -380,6 +480,7 @@ function saveStory(id){
   s.headline=document.getElementById('sf-hl-'+id)?.value.trim()||'';s.subhead=document.getElementById('sf-sub-'+id)?.value.trim()||'';s.reporter=document.getElementById('sf-rep-'+id)?.value||'';s.section=document.getElementById('sf-sec-'+id)?.value||s.section;s.status=document.getElementById('sf-st-'+id)?.value||s.status;s.priority=document.getElementById('sf-pri-'+id)?.value||'Normal';s.due=document.getElementById('sf-due-'+id)?.value||s.due;s.page=document.getElementById('sf-pg-'+id)?.value||s.page;s.wordcount=document.getElementById('sf-wc-'+id)?.value||'';s.layout=document.getElementById('sf-layout-'+id)?.value||'';s.sources=document.getElementById('sf-src-'+id)?.value||'';s.notes=document.getElementById('sf-notes-'+id)?.value||'';s.photoAssign=document.getElementById('sf-photo-'+id)?.value||'';s.photoStatus=document.getElementById('sf-photost-'+id)?.value||'Not needed';s.urgent=document.getElementById('sf-urg-'+id)?.checked||false;
   save('stories',stories);openStoryId=null;render();
 }
+function advStatus(id){const stories=load('stories'),s=stories.find(x=>x.id===id);if(!s)return;s.status=STATUSES[(STATUSES.indexOf(s.status)+1)%STATUSES.length];save('stories',stories);render()}
 function delStory(id){if(!confirm('Delete?'))return;save('stories',load('stories').filter(x=>x.id!==id));openStoryId=null;render()}
 
 function openEvDrawer(id){evOpen=true;evId=id;renderEvDrawer()}
