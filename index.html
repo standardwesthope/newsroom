@@ -72,6 +72,42 @@ body.light .wk-str{color:#333}
 body.light .sub{color:#888}
 .theme-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;border:1px solid #444;background:transparent;cursor:pointer;font-size:12px;color:#e8e8e8;font-family:inherit;transition:all .12s}
 body.light .theme-btn{border-color:#ddd;color:#555;background:#fff}
+
+body.light .cal-grid .day-col{background:#fff;border:1px solid #e5e7eb}
+body.light .two-weeks{background:transparent}
+body.light .week-block{background:transparent}
+body.light .day-body{background:#fff}
+
+body.light .two-weeks .ev-block[style*="background:#1a"]{background:#FFF7ED !important}
+body.light .two-weeks .ev-block[style*="background:#20"]{background:#F9FAFB !important}
+body.light .two-weeks .ev-block[style*="background:#25"]{background:#EFF6FF !important}
+body.light .two-weeks .ev-block[style*="background:#27"]{background:#FFF7ED !important}
+body.light .two-weeks .ev-block[style*="background:#1e"]{background:#F5F3FF !important}
+body.light .two-weeks .ev-block[style*="background:#2a"]{background:#FEF2F2 !important}
+body.light .two-weeks .ev-block[style*="background:#0d"]{background:#F0FDFA !important}
+body.light .two-weeks .ev-block[style*="background:#0e"]{background:#F0FDF4 !important}
+body.light .two-weeks .ev-block[style*="background:#22"]{background:#1f2937 !important}
+body.light .ev-title{color:#1a1a1a !important}
+body.light .ev-meta{color:#555 !important}
+body.light #story-list-area [style*="background:#"]{background:#fff !important;border-color:#e5e7eb !important}
+body.light #story-list-area [style*="color:#f0f0f0"]{color:#1a1a1a !important}
+body.light #story-list-area [style*="color:#888"]{color:#555 !important}
+body.light #story-list-area [style*="color:#666"]{color:#777 !important}
+body.light .cal-wrap{width:100%;overflow-x:auto}
+body.light .two-weeks{min-width:580px}
+
+body.light .stat{background:#fff}
+body.light .stat.total{background:#EFF6FF}
+body.light .stat.pend{background:#FFFBEB}
+body.light .stat.prog{background:#FFF7ED}
+body.light .stat.done{background:#F0FDF4}
+body.light .checklist-panel{background:#fff}
+body.light .cl-chk{background:#f9f9f9}
+body.light .adplace-row.placed{background:#F0FDF4}
+body.light .adplace-row.unplaced{background:#fff}
+body.light .sportcard.cov{background:#F0FDF4}
+body.light .sportcard.nocov{background:#fff}
+
 #pw-screen{position:fixed;inset:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:999}
 .pw-box{background:#242424;border:1px solid #444;border-radius:12px;padding:2rem;width:min(360px,90vw);text-align:center}
 .pw-box h2{font-size:20px;font-weight:500;color:#fff;margin-bottom:.5rem}
@@ -213,7 +249,7 @@ body.light .theme-btn{border-color:#ddd;color:#555;background:#fff}
     <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
   </div>
 </div>
-<div class="app" id="main-app" style="display:none">
+<div class="app" id="main-app" style="overflow-x:hidden" style="display:none">
 <div class="mast">
   <div>
     <div class="logo">&#128240; The Standard</div>
@@ -244,10 +280,10 @@ body.light .theme-btn{border-color:#ddd;color:#555;background:#fff}
     <button class="btn btn-blue btn-sm" style="margin-left:auto" onclick="addNewStory()">+ Add story</button>
     <button class="btn btn-sm" onclick="openEvDrawer(null)">&#128205; Add event</button>
   </div>
-  <div id="story-form-area"></div>
+  <div id="story-form-area" style="min-width:0;width:100%"></div>
   <div id="ev-form-area"></div>
   <div class="cal-wrap"><div class="two-weeks" id="two-weeks"></div></div>
-  <div id="story-list-area" style="margin-top:.875rem"></div>
+  <div id="story-list-area" style="margin-top:.875rem;min-width:0;width:100%"></div>
 </div>
 <div class="tc" id="tc-checklist">
   <div class="section-hd">Weekly production checklist</div>
@@ -512,13 +548,13 @@ function renderStoryList(){
     const isU=s.urgent===true||s.urgent==='true';
     const bc=isU?'#DC2626':(SCOLOR[s.status]||'#555');
     const bg=isU?'#2a0a0a':(SBGCOLOR[s.status]||'#242424');
-    return`<div style="background:${bg};border:1px solid #2e2e2e;border-left:4px solid ${bc};border-radius:8px;padding:.6rem .875rem;margin-bottom:5px;display:flex;align-items:stretch;gap:10px;cursor:pointer" onclick="openStoryInline('${s.id}')">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+    return`<div style="background:${bg};border:1px solid #2e2e2e;border-left:4px solid ${bc};border-radius:8px;padding:.6rem .875rem;margin-bottom:5px;display:flex;align-items:stretch;gap:10px;cursor:pointer;width:100%;box-sizing:border-box" onclick="openStoryInline('${s.id}')">
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
           ${isU?`<span style="font-size:11px;background:#3a0a0a;color:#DC2626;border:1px solid #DC262644;border-radius:20px;padding:1px 8px;font-weight:600">URGENT</span>`:''}
-          <span style="font-size:13px;font-weight:500;color:#f0f0f0">${esc(s.headline||'(untitled)')}</span>
+          <span style="font-size:13px;font-weight:500;color:#f0f0f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${esc(s.headline||'(untitled)')}</span>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
           <span style="font-size:11px;padding:1px 7px;border-radius:20px;font-weight:500;background:${SBGCOLOR[s.status]||'#2a2a2a'};color:${SCOLOR[s.status]||'#888'}">${s.status}</span>
           <span class="tag">${esc(s.section)}</span>
           ${s.reporter?`<span class="tag">&#128101; ${esc(s.reporter)}</span>`:''}
@@ -529,7 +565,8 @@ function renderStoryList(){
           ${s.placed===true||s.placed==='true'?`<span class="tag" style="color:#22C55E;border-color:#22C55E44;font-weight:500">&#9989; Placed p.${s.placedPage||'?'}</span>`:''}
           ${s.priority&&s.priority!=='Normal'?`<span class="tag" style="color:#EF4444">&#9650; ${s.priority}</span>`:''}
           ${s.origDue&&s.origDue!==s.due?`<span class="tag" style="color:#EF9F27;border-color:#EF9F2744">&#8635; Moved from ${fmtDk(s.origDue)}${s.holdReason?' \u2014 '+esc(s.holdReason):''}</span>`:''}
-        ${s.notes?`<div style="font-size:12px;color:#666;margin-top:5px;font-style:italic">${esc(s.notes)}</div>`:''}
+        </div>
+        ${s.notes?`<div style="font-size:12px;color:#666;margin-top:4px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.notes)}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;justify-content:center;flex-shrink:0">
         <button class="xbtn" onclick="event.stopPropagation();advStatus('${s.id}')" title="Advance status" style="font-size:18px;color:${SCOLOR[s.status]||'#555'}">&#9654;</button>
