@@ -256,7 +256,11 @@ body.light .sportcard.nocov{background:#fff}
     <div class="sub">Publishes Wednesday &nbsp;&middot;&nbsp; Print deadline Monday 2:00 PM</div>
   </div>
   <div class="deadline-pill">&#9201; <span id="dl-txt">&hellip;</span></div>
+  <span id="backup-status" style="font-size:11px;color:#555;white-space:nowrap"></span>
   <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+  <button class="btn btn-sm" onclick="exportData()" title="Download a backup of all your data">&#128229; Backup</button>
+  <button class="btn btn-sm" onclick="document.getElementById('import-file').click()" title="Restore from a backup file">&#128228; Restore</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
   <button class="btn btn-blue btn-sm" onclick="openEmailModal()">&#9993; Email reporters</button>
   <button class="btn btn-green btn-sm" onclick="openPrintModal()">&#128438; Print</button>
   <button class="btn btn-sm" onclick="printMonthCalendar()">&#128197; Month view</button>
@@ -269,6 +273,7 @@ body.light .sportcard.nocov{background:#fff}
   <div class="tab" id="tab-ads" onclick="switchTab('ads')">&#128176; Advertising</div>
   <div class="tab" id="tab-sports" onclick="switchTab('sports')">&#127942; School / Sports</div>
   <div class="tab" id="tab-reporters" onclick="switchTab('reporters')">&#128101; Staff</div>
+  <div class="tab" id="tab-settings" onclick="switchTab('settings')">&#9881; Settings</div>
 </div>
 <div class="tc on" id="tc-stories">
   <div class="stats-row" id="stats"></div>
@@ -317,10 +322,96 @@ body.light .sportcard.nocov{background:#fff}
   <div id="rep-form-area"></div>
   <div id="replist"></div>
 </div>
+<div class="tc" id="tc-settings">
+  <div class="section-hd">Newsroom settings</div>
+  <div id="settings-area"></div>
+</div>
 <div id="modal-root"></div>
 </div>
 <script>
 const CORRECT_PW='coffeeshop';
+const SETTING_DEFAULTS={
+  paperName:'The Standard',
+  pubDay:'3',
+  deadlineDay:'1',
+  deadlineHour:'14',
+  deadlineMinute:'00',
+  pubSchedule:'Weekly',
+  password:'coffeeshop',
+  tagline:'Serving our community since 1900',
+  pageCount:'16',
+  sections:'News,Sports,Opinion,Feature,Business,Arts & Culture,Obituaries,Community,Letters,Other'
+};
+// ---- BACKUP & RESTORE ----
+function exportData(){
+  const db=dbget();
+  const exportObj={
+    version:1,
+    exported:new Date().toISOString(),
+    paper:'The Standard',
+    data:db
+  };
+  const blob=new Blob([JSON.stringify(exportObj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const dateStr=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download=`the-standard-backup-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  // Record last backup time
+  localStorage.setItem('ts_last_backup',new Date().toISOString());
+  showBackupStatus();
+}
+
+function importData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const obj=JSON.parse(e.target.result);
+      // Support both wrapped format and raw db format
+      const db=obj.data||obj;
+      const keys=['stories','events','ads','sports','reporters','checklist'];
+      let count=0;
+      keys.forEach(k=>{if(db[k]&&Array.isArray(db[k])){count++;}});
+      if(count===0){alert('This doesn\'t look like a valid backup file. No data found.');input.value='';return;}
+      if(!confirm(`Restore backup from ${obj.exported?new Date(obj.exported).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'this file'}?\n\nThis will replace ALL current data. Make sure you export a backup of your current data first if needed.`)){input.value='';return;}
+      // Restore
+      keys.forEach(k=>{if(db[k]&&Array.isArray(db[k])){const d=dbget();d[k]=db[k];dbset(d);}});
+      // Also restore theme
+      if(obj.data&&obj.data.ts_theme) localStorage.setItem('ts_theme',obj.data.ts_theme);
+      input.value='';
+      alert(`Backup restored successfully!\n${count} data categories loaded.`);
+      render();
+    }catch(err){
+      alert('Could not read backup file. Make sure it\'s a valid The Standard backup (.json).');
+      input.value='';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showBackupStatus(){
+  const last=localStorage.getItem('ts_last_backup');
+  const el=document.getElementById('backup-status');
+  if(!el)return;
+  if(last){
+    const d=new Date(last);
+    const days=Math.floor((Date.now()-d)/86400000);
+    if(days===0) el.textContent='Backed up today';
+    else if(days===1) el.textContent='Backed up yesterday';
+    else el.textContent=`Last backup: ${days} days ago`;
+    el.style.color=days>6?'#EF4444':days>2?'#FBBF24':'#22C55E';
+  } else {
+    el.textContent='No backup yet';
+    el.style.color='#EF4444';
+  }
+}
+
 function toggleTheme(){
   const isLight=document.body.classList.toggle('light');
   localStorage.setItem('ts_theme', isLight?'light':'dark');
@@ -336,14 +427,19 @@ function applyTheme(){
   }
 }
 
+function getStoredPW(){
+  try{const s=localStorage.getItem('ts_settings');if(s){const p=JSON.parse(s).password;if(p)return p;}return CORRECT_PW;}catch(e){return CORRECT_PW;}
+}
 function checkPW(){
+  const pw=getStoredPW();
   const v=document.getElementById('pw-input').value;
-  if(v===CORRECT_PW){sessionStorage.setItem('ts_auth',CORRECT_PW);document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
+  if(v===pw){sessionStorage.setItem('ts_auth',v);document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
   else{document.getElementById('pw-err').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
 window.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
-  if(sessionStorage.getItem('ts_auth')===CORRECT_PW){document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
+  const pw=getStoredPW();
+  if(sessionStorage.getItem('ts_auth')===pw){document.getElementById('pw-screen').style.display='none';document.getElementById('main-app').style.display='block';initApp();}
   else document.getElementById('pw-input').focus();
 });
 
@@ -420,14 +516,22 @@ function switchTab(t){activeTab=t;document.querySelectorAll('.tab').forEach(e=>e
 function shiftWeek(n){wkOff=n===0?0:wkOff+n;render()}
 
 function updateDeadline(){
+  const s=loadSettings();
+  const dlDow=parseInt(s.deadlineDay)||1;
+  const dlHour=parseInt(s.deadlineHour)||14;
+  const dlMin=parseInt(s.deadlineMinute)||0;
   const now=new Date(),day=now.getDay();
-  let diff=(1-day+7)%7;if(diff===0&&now.getHours()>=14)diff=7;
-  const dl=new Date(now);dl.setDate(now.getDate()+diff);dl.setHours(14,0,0,0);
+  let diff=(dlDow-day+7)%7;
+  if(diff===0&&(now.getHours()>dlHour||(now.getHours()===dlHour&&now.getMinutes()>=dlMin)))diff=7;
+  const dl=new Date(now);dl.setDate(now.getDate()+diff);dl.setHours(dlHour,dlMin,0,0);
   const ms=dl-now,hrs=Math.floor(ms/3600000),mins=Math.floor((ms%3600000)/60000);
   const el=document.getElementById('dl-txt'),bar=el?.parentElement;if(!el)return;
+  const dlHour12=dlHour>12?dlHour-12:dlHour||12;
+  const ampm=dlHour>=12?'PM':'AM';
+  const dlTimeStr=`${dlHour12}:${String(dlMin).padStart(2,'0')} ${ampm}`;
   if(hrs<4){if(bar){bar.style.borderColor=URGENT;bar.style.color=URGENT;bar.style.background='#280a0a';}el.textContent=`DEADLINE ${hrs}h ${mins}m`;}
-  else if(hrs<24){el.textContent=`Deadline today at 2 PM (${hrs}h away)`;}
-  else{el.textContent=`Deadline in ${Math.floor(hrs/24)}d ${hrs%24}h \u2014 Mon 2 PM`;}
+  else if(hrs<24){el.textContent=`Deadline today at ${dlTimeStr} (${hrs}h away)`;}
+  else{el.textContent=`Deadline in ${Math.floor(hrs/24)}d ${hrs%24}h \u2014 ${DAYS[dlDow]} ${dlTimeStr}`;}
 }
 
 function render(){
@@ -438,6 +542,7 @@ function render(){
   if(activeTab==='ads'){renderAdFilters();renderAds();renderAdDrawer();}
   if(activeTab==='sports'){renderSpFilters();renderSports();renderSpDrawer();}
   if(activeTab==='reporters'){renderReporters();renderRepDrawer();}
+  if(activeTab==='settings'){renderSettings();}
   renderEvDrawer();renderStoryForm();
   const d0=daysList(wkOff),d1=daysList(wkOff+1),s0=d0[0],e1=d1[6];
   const el=document.getElementById('wstr');
@@ -477,9 +582,12 @@ function setStoryFilter(f){
 
 function renderWeekGrid(weekOff){
   const d=daysList(weekOff),today=dk(new Date()),stories=load('stories'),events=load('events');
+  const cfg=loadSettings();
+  const dlDow=parseInt(cfg.deadlineDay)||1;
+  const pubDow=parseInt(cfg.pubDay)||3;
   return d.map(day=>{
     const key=dk(day),dow=day.getDay();
-    const isToday=key===today,isDl=dow===1,isPub=dow===3;
+    const isToday=key===today,isDl=dow===dlDow,isPub=dow===pubDow;
     let hdClass='day-hd';if(isToday)hdClass+=' today';else if(isDl)hdClass+=' deadline';else if(isPub)hdClass+=' pubday';
     const daySt=stories.filter(x=>x.due===key).sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status));
     const dayEv=events.filter(x=>{const s=x.date,e=x.dateEnd||x.date;return key>=s&&key<=e;});
@@ -509,8 +617,9 @@ function renderWeekGrid(weekOff){
 function renderTwoWeeks(){
   const el=document.getElementById('two-weeks');if(!el)return;
   const d0=daysList(wkOff),d1=daysList(wkOff+1);
-  const lbl0=`This week \u2014 ${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()} \u00b7 publishes Wed ${d0[3].getDate()}`;
-  const lbl1=`Next week \u2014 ${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()} \u00b7 publishes Wed ${d1[3].getDate()}`;
+  const pubDow=parseInt(loadSettings().pubDay)||3;
+  const lbl0=`This week \u2014 ${MONTHS[d0[0].getMonth()].slice(0,3)} ${d0[0].getDate()}\u2013${d0[6].getDate()} \u00b7 publishes ${DAYS[pubDow]} ${d0[pubDow]?.getDate()||''}`;
+  const lbl1=`Next week \u2014 ${MONTHS[d1[0].getMonth()].slice(0,3)} ${d1[0].getDate()}\u2013${d1[6].getDate()} \u00b7 publishes ${DAYS[pubDow]} ${d1[pubDow]?.getDate()||''}`;
   el.innerHTML=`<div class="week-block"><div class="wk-label">${lbl0}</div><div class="cal-grid">${renderWeekGrid(wkOff)}</div></div><div class="week-block" style="margin-top:6px"><div class="wk-label">${lbl1}</div><div class="cal-grid">${renderWeekGrid(wkOff+1)}</div></div>`;
 }
 
@@ -1060,9 +1169,11 @@ function doPrint(){
 // Default to the week currently being worked on:
 // If today is past Monday 2pm, we're working on NEXT week's paper.
 function getDefaultAdPlaceOffset(){
+  const s=loadSettings();
+  const dlDow=parseInt(s.deadlineDay)||1;
+  const dlHour=parseInt(s.deadlineHour)||14;
   const now=new Date(),dow=now.getDay(),hrs=now.getHours();
-  // Mon=1. If past Mon 2pm (dow>1, or dow===1 && hrs>=14), next paper is next week
-  if(dow>1||(dow===1&&hrs>=14)) return 1;
+  if(dow>dlDow||(dow===dlDow&&hrs>=dlHour)) return 1;
   return 0;
 }
 let adPlaceWkOff=getDefaultAdPlaceOffset();
@@ -1295,7 +1406,146 @@ function printMonthCalendar(){
   setTimeout(()=>pw.print(),350);
 }
 
-function initApp(){render();setInterval(updateDeadline,60000)}
+// ---- SETTINGS ----
+// SETTING_DEFAULTS moved to top of script
+
+function loadSettings(){
+  try{
+    const s=localStorage.getItem('ts_settings');
+    if(!s)return{...SETTING_DEFAULTS};
+    const saved=JSON.parse(s);
+    // Don't let empty/null saved values override defaults
+    const merged={...SETTING_DEFAULTS};
+    Object.keys(saved).forEach(k=>{if(saved[k]!==''&&saved[k]!=null)merged[k]=saved[k];});
+    return merged;
+  }catch(e){return{...SETTING_DEFAULTS};}
+}
+function saveSettings(obj){
+  localStorage.setItem('ts_settings',JSON.stringify(obj));
+  applySettings();
+}
+function getSetting(key){return loadSettings()[key]||SETTING_DEFAULTS[key]||'';}
+
+function applySettings(){
+  const s=loadSettings();
+  // Paper name
+  const logoEl=document.querySelector('.logo');
+  if(logoEl)logoEl.innerHTML='&#128240; '+s.paperName;
+  // Sub line
+  const subEl=document.querySelector('.sub');
+  const pubDayName=DAYS[parseInt(s.pubDay)]||'Wednesday';
+  const dlDayName=DAYS[parseInt(s.deadlineDay)]||'Monday';
+  const dlHour=parseInt(s.deadlineHour);
+  const dlMin=s.deadlineMinute||'00';
+  const dlAmPm=dlHour>=12?'PM':'AM';
+  const dlHour12=dlHour>12?dlHour-12:dlHour||12;
+  if(subEl)subEl.innerHTML=`${s.pubSchedule} ${s.pubSchedule==='Weekly'?'on ':''}${pubDayName} &nbsp;&middot;&nbsp; Print deadline ${dlDayName} ${dlHour12}:${dlMin} ${dlAmPm}`;
+  // Page title
+  document.title=s.paperName+' \u2014 Newsroom Planner';
+  // Password login screen name
+  const pwTitle=document.querySelector('.pw-box h2');
+  if(pwTitle)pwTitle.innerHTML='&#128240; '+s.paperName;
+  // Update PAGES array based on pageCount — only if valid
+  const pc=parseInt(s.pageCount)||16;
+  if(pc>=4&&pc<=64){
+    PAGES.length=0;
+    for(let i=1;i<=pc;i++) PAGES.push('Page '+i);
+    PAGES.push('TBD');
+  }
+  // Update SECTIONS — only if non-empty
+  if(s.sections&&s.sections.trim()){
+    const secs=s.sections.split(',').map(x=>x.trim()).filter(Boolean);
+    if(secs.length>0){
+      SECTIONS.length=0;
+      secs.forEach(x=>SECTIONS.push(x));
+    }
+  }
+}
+
+function renderSettings(){
+  const el=document.getElementById('settings-area');if(!el)return;
+  const s=loadSettings();
+  const dayOpts=DAYS.map((d,i)=>`<option value="${i}"${s.pubDay==i?' selected':''}>${d}</option>`).join('');
+  const dlDayOpts=DAYS.map((d,i)=>`<option value="${i}"${s.deadlineDay==i?' selected':''}>${d}</option>`).join('');
+  el.innerHTML=`
+    <div style="max-width:640px">
+      <div class="panel" style="background:var(--bg2,#242424);border:1px solid #333;border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+        <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#888;margin-bottom:.875rem">Paper information</div>
+        <div class="r2">
+          <div class="fld"><label>Paper name</label><input id="st-name" value="${esc(s.paperName)}" placeholder="The Standard"></div>
+          <div class="fld"><label>Tagline / est.</label><input id="st-tagline" value="${esc(s.tagline)}" placeholder="Serving our community since 1900"></div>
+        </div>
+        <div class="r3">
+          <div class="fld"><label>Publication schedule</label><select id="st-sched"><option${s.pubSchedule==='Weekly'?' selected':''}>Weekly</option><option${s.pubSchedule==='Twice weekly'?' selected':''}>Twice weekly</option><option${s.pubSchedule==='Daily'?' selected':''}>Daily</option><option${s.pubSchedule==='Monthly'?' selected':''}>Monthly</option></select></div>
+          <div class="fld"><label>Publish day</label><select id="st-pubday">${dayOpts}</select></div>
+          <div class="fld"><label>Number of pages</label><input type="number" id="st-pages" value="${esc(s.pageCount)}" min="4" max="64" placeholder="16"></div>
+        </div>
+        <div class="fld"><label>Sections (comma separated)</label><input id="st-sections" value="${esc(s.sections)}" placeholder="News,Sports,Opinion,Feature…"></div>
+      </div>
+      <div class="panel" style="background:var(--bg2,#242424);border:1px solid #333;border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+        <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#888;margin-bottom:.875rem">Deadline settings</div>
+        <div class="r3">
+          <div class="fld"><label>Deadline day</label><select id="st-dlday">${dlDayOpts}</select></div>
+          <div class="fld"><label>Deadline hour (24hr)</label><input type="number" id="st-dlhour" value="${esc(s.deadlineHour)}" min="0" max="23" placeholder="14"></div>
+          <div class="fld"><label>Deadline minute</label><input type="number" id="st-dlmin" value="${esc(s.deadlineMinute)}" min="0" max="59" placeholder="00"></div>
+        </div>
+        <div style="font-size:12px;color:#666;margin-top:.25rem">Currently: deadline ${DAYS[parseInt(s.deadlineDay)]} at ${parseInt(s.deadlineHour)>12?parseInt(s.deadlineHour)-12:parseInt(s.deadlineHour)||12}:${s.deadlineMinute||'00'} ${parseInt(s.deadlineHour)>=12?'PM':'AM'}</div>
+      </div>
+      <div class="panel" style="background:var(--bg2,#242424);border:1px solid #333;border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+        <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#888;margin-bottom:.875rem">Access</div>
+        <div class="r2">
+          <div class="fld"><label>App password</label><input type="password" id="st-pw" value="${esc(s.password)}" placeholder="Enter new password"></div>
+          <div class="fld"><label>Confirm password</label><input type="password" id="st-pw2" value="${esc(s.password)}" placeholder="Confirm new password"></div>
+        </div>
+        <div style="font-size:12px;color:#666;margin-top:.25rem">&#9888; If you change the password, make sure all staff know the new one. You will be logged out.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-blue" onclick="saveSettingsForm()" style="padding:8px 20px;font-size:14px">&#9989; Save settings</button>
+        <button class="btn" onclick="resetSettings()">Reset to defaults</button>
+        <span id="settings-msg" style="font-size:13px;color:#22C55E;display:none">&#10003; Settings saved!</span>
+      </div>
+    </div>`;
+}
+
+function saveSettingsForm(){
+  const pw=document.getElementById('st-pw').value;
+  const pw2=document.getElementById('st-pw2').value;
+  if(pw!==pw2){alert('Passwords do not match.');return;}
+  const s={
+    paperName:document.getElementById('st-name').value.trim()||'The Standard',
+    tagline:document.getElementById('st-tagline').value.trim(),
+    pubSchedule:document.getElementById('st-sched').value,
+    pubDay:document.getElementById('st-pubday').value,
+    pageCount:document.getElementById('st-pages').value||'16',
+    sections:document.getElementById('st-sections').value,
+    deadlineDay:document.getElementById('st-dlday').value,
+    deadlineHour:document.getElementById('st-dlhour').value||'14',
+    deadlineMinute:String(document.getElementById('st-dlmin').value||'00').padStart(2,'0'),
+    password:pw||loadSettings().password
+  };
+  const currentPw=getStoredPW();
+  localStorage.setItem('ts_settings',JSON.stringify(s));
+  applySettings();
+  renderSettings();
+  render();
+  if(pw&&pw!==currentPw){
+    sessionStorage.removeItem('ts_auth');
+    alert('Password updated to: '+pw+'\n\nPlease log in again with the new password.');
+    location.reload();
+    return;
+  }
+  const msg=document.getElementById('settings-msg');
+  if(msg){msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);}
+}
+
+function resetSettings(){
+  if(!confirm('Reset all settings to defaults?'))return;
+  localStorage.removeItem('ts_settings');
+  applySettings();
+  renderSettings();
+}
+
+function initApp(){applySettings();render();showBackupStatus();setInterval(updateDeadline,60000);setInterval(showBackupStatus,60000)}
 </script>
 </body>
 </html>
